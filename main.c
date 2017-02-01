@@ -45,9 +45,11 @@
 
 TASK_TEMPLATE_STRUCT MQX_template_list[] =
 {
-/*  Task number, Entry point, Stack, Pri, String, Auto? */
-   {MAIN_TASK,   Main_task,   2000,  9,   "main", MQX_AUTO_START_TASK},
-   {0,           0,           0,     0,   0,      0,                 }
+/*  Task number, Entry point, Stack, Pri, String, Autostart, Round robin time slice */
+   {MAIN_TASK,   Main_task,   2000,  9,   "main", MQX_AUTO_START_TASK, 50},
+   {BUTTON_TASK, Button_task, 2000, 9, "button", 0, 50},
+   {FLASH_TASK,  Flash_task, 2000, 9, "flash",   0, 50},
+   {0,           0,           0,     0,   0,      0, 50}
 };
 
 /*TASK*-----------------------------------------------------------------
@@ -82,7 +84,7 @@ room_alarm room_alarms[N_ROOMS];
 /* function declarations */ 
 void init_room_alarms();
 void init_pushbuttons();
-void alarm_update();
+void led_update();
 /* button/touch sensor callbacks*/
 void trigger_alarm_callback(void *room_alarm_ptr);
 void hush_all_callback(void *room_alarm_ptr);
@@ -121,17 +123,37 @@ void Main_task(uint_32 initial_data) {
 
 	//initialise alarm structs
 	init_room_alarms();
-	init_pushbuttons();
-	alarm_update(); // initial status update
+	// run slave tasks
+	_task_create(0, FLASH_TASK, 0); //processor, task name, parameter
+	_task_create(0, BUTTON_TASK, 0);
 	// run server
 	httpd_server_run(http_server);
 	while (TRUE) {
 		ipcfg_task_poll();
-		btnled_poll(hmi);
-		alarm_update();
+		_sched_yield(); //yield to other tasks
 	}
 }
 
+
+
+void Button_task(uint_32 initial_data) {
+	init_pushbuttons();
+	while(TRUE) {
+		btnled_poll(hmi);
+		_sched_yield(); //yield to other tasks
+	}
+}
+
+void Flash_task(uint_32 initial_data) {
+	uint_32 toggle_state;
+	toggle_state = 0;
+	led_update(); // initial led update
+	while(TRUE) {
+		_time_delay(200);
+		toggle_state = !toggle_state;
+		led_update(toggle_state);
+	}
+}
 
 void init_room_alarms() {
 	int i; //iterator
@@ -139,9 +161,9 @@ void init_room_alarms() {
 	for (i = 0; i < N_ROOMS; ++i) {
 		room_alarms[i].led = HMI_GET_LED_ID(i+1);
 		room_alarms[i].button = HMI_GET_BUTTON_ID(i+1);
-		room_alarms[i].enabled = FALSE;
+		room_alarms[i].enabled = TRUE;
 		room_alarms[i].triggered = FALSE;
-		//attach callbacks
+		//attach alarm trigger callbacks
 		btnled_add_clb(hmi, 
 			room_alarms[i].button, 
 			HMI_VALUE_PUSH, 
@@ -152,7 +174,7 @@ void init_room_alarms() {
 void init_pushbuttons() {
 	btnled_add_clb(hmi, HMI_BUTTON_5, HMI_VALUE_RELEASE, enable_all_callback, NULL);
 	btnled_add_clb(hmi, HMI_BUTTON_6, HMI_VALUE_RELEASE, hush_all_callback, NULL);
-}
+} 
 
 
 void trigger_alarm_callback(void *room_alarm_ptr) {
@@ -162,30 +184,29 @@ void trigger_alarm_callback(void *room_alarm_ptr) {
 
 void hush_all_callback(void *room_alarm_ptr) {
 	int i;
+	// mutex lock
 	for (i = 0; i < N_ROOMS; ++i) { //disable all alarms
 		room_alarms[i].triggered = FALSE;
 		room_alarms[i].enabled = FALSE;
 	}
+	//mutex unlock
 }
 
 void enable_all_callback(void *room_alarm_ptr) {
 	int i;
+	// mutex lock
 	for (i = 0; i < N_ROOMS; ++i) { //enable all alarms
 		room_alarms[i].enabled = TRUE;
 	}
+	// mutex unlock
 }
 
-void alarm_update() {
-	static uint_32 prev_time = 0; // persistent timer
+void led_update(uint_32 toggle_state) {
 	int i;
-	RTC_TIME_STRUCT curr_time;
-	_rtc_get_time(&curr_time);
-	if (curr_time.seconds == prev_time) return; // toggles every second
-	prev_time = curr_time.seconds;
-	// toggle triggered LEDS
+	//mutex lock
 	for (i = 0; i < N_ROOMS; ++i) {
 		if (room_alarms[i].triggered) {
-			btnled_toogle(hmi, room_alarms[i].led);
+			btnled_set_value(hmi, room_alarms[i].led, toggle_state);
 		}
 		else if(room_alarms[i].enabled) {
 			btnled_set_value(hmi, room_alarms[i].led, HMI_VALUE_ON);
@@ -194,6 +215,7 @@ void alarm_update() {
 			btnled_set_value(hmi, room_alarms[i].led, HMI_VALUE_OFF);
 		}
 	}
+	// mutex unlock 
 }
 
 _mqx_int led_callback(HTTPD_SESSION_STRUCT *session) {

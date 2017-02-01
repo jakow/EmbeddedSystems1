@@ -16,20 +16,23 @@
 
 
 
-#define MAIN_TASK   1
-
+#define MAIN_TASK 	1
+#define BUTTON_TASK	2
+#define FLASH_TASK	3
 
 #define ENET_DEVICE 0
 #define RTCS_DHCP 0
 
 #define ENET_IPADDR IPADDR(192,168,105,212)
-#define ENET_IPMASK IPADDR(255,255,255,0)
+#define ENET_IPMASK	IPADDR(255,255,255,0)
 #define ENET_GATEWAY IPADDR(192,168,105,250)
 #define RTCS_PPP 0
 
     
 
 extern void Main_task (uint_32);
+extern void Flash_task (uint_32);
+extern void Button_task (uint_32);
 
 
 void rtcs_init(void);

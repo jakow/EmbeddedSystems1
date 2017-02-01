@@ -1,3 +1,6 @@
 webpage.h
 main
+main.o
+main.d
+rtcs_init.o
 rtcs_init.d
