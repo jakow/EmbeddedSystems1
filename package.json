@@ -1,0 +1,23 @@
+{
+  "name": "embedded-systems1",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jakow/EmbeddedSystems1.git"
+  },
+  "author": "jakow",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jakow/EmbeddedSystems1/issues"
+  },
+  "homepage": "https://github.com/jakow/EmbeddedSystems1#readme",
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-inline-source": "^3.0.0"
+  }
+}

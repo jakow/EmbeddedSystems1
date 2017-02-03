@@ -1,0 +1,259 @@
+/*@import url('https://fonts.googleapis.com/css?family=Raleway');*/
+@import url('https://fonts.googleapis.com/css?family=Cabin');
+@import url('https://fonts.googleapis.com/css?family=Fira+Mono');
+
+
+html, body {
+	height: 100%;
+}
+
+body {
+	background: #323a4c;
+	font-family: 'Cabin', sans-serif;
+
+	line-height: 1.4;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	transition: background 0.2s ease-out;
+}
+
+body.alarm {
+	transition: background 0.2s ease-out;
+	background: #EF5350;
+	animation: alarm 0.4s ease-in infinite alternate;
+}
+
+@keyframes alarm {
+    from {background-color: #EF5350;}
+    to {background-color: #EF9A9A;}
+}
+
+
+p {
+	margin-bottom: 1em;
+}
+/* layout */
+.main-container {
+	margin: 3rem auto;
+	flex: 0 1 auto;
+}
+
+/* looks */
+.main-container {
+	background: white;
+	border-radius: 2px;
+	box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.20), 0px 4px 17px 4px rgba(0,0,0,0.2);
+}
+
+.top-bar {
+	padding: 1rem 30px;
+	border-bottom: 1px solid #eee;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.top-bar .right {
+	flex: 1;
+	text-align: right;
+}
+
+.brand > * {
+	display: inline;
+	vertical-align: middle;
+}
+.logo {
+	height: 64px;
+}
+.logo-name {
+	font-size: 3rem;
+	margin-left: 1rem;
+}
+
+
+.grid-row {
+	display: flex;
+	flex-wrap: nowrap;
+	flex-direction: row;
+}
+
+.grid-cell {
+	flex: 1 1 auto;
+}
+
+.grid--top {
+  align-items: flex-start;
+}
+.grid--bottom {
+  align-items: flex-end;
+}
+.grid--center {
+  align-items: center;
+}
+
+.grid-cell--top {
+  align-self: flex-start;
+}
+.grid-cell--bottom {
+  align-self: flex-end;
+}
+.grid-cell--center {
+  align-self: center;
+}
+
+.room {
+	text-align: center;
+	padding: 1.5rem;
+	border-bottom: 1px solid #eee;
+}
+
+.room--name {
+	margin-bottom: 12px;
+}
+.room:not(:last-child) {
+	border-right: 1px solid #eee;
+	
+}
+
+.room--name {
+	text-align: center;
+	font-size: 2rem;
+}
+.room--status {
+	font-size: 2.5rem;
+	
+	margin-bottom: 1rem;
+	transition: all 0.22s ease-in 0s;
+}
+
+.room--status.enabled {
+	color: #32D187;
+}
+.room--status.disabled {
+	color: #FFA726;
+}
+
+.room--status.alarm {
+	color: #EF5350;
+}
+
+
+.room--alarm-scheduler {
+	padding: 1rem ;
+	border-top: 1px solid #eee;
+}
+.room--alarm-scheduler .scheduled-time {
+	font-family: 'Fira Mono';
+	font-size 1.5rem;
+	margin-right: 1rem;
+}
+
+.room--alarm-scheduler .button {
+	/*padding: 0 1rem;*/
+	padding: 0;
+	width: 4rem;
+	height: 4rem;
+}
+
+
+.onoffswitch {
+	text-align: left;
+	display: inline-block;
+    position: relative; 
+    width: 64px;
+    -webkit-user-select:none; -moz-user-select:none; -ms-user-select: none;
+}
+.onoffswitch-checkbox {
+    display: none !important;
+}
+.onoffswitch-label {
+    display: block; overflow: hidden; cursor: pointer;
+    border: 1px solid #32D187; border-radius: 20px;
+    background: #eee;
+    height: 30px;
+    white-space: nowrap;
+}
+.onoffswitch-inner {
+    display: inline-block; 
+    /*width: 200%; */
+    transition: all 0.22s ease-in 0s;
+
+}
+.onoffswitch-inner:before, .onoffswitch-inner:after {
+	margin-top: 1px;
+	display: inline-block;
+	width: 70px;
+	font-size: 1.25rem;
+}
+
+
+.onoffswitch-inner {
+	display: inline-block; width: 22px; height: 22px;
+	margin: 4px;
+	/*background: #EF5350;*/
+	background: #FFA726;
+
+	border-radius: 20px;
+}
+.onoffswitch-inner:before {
+    /*content: "ENABLED";*/
+    content: '';
+	margin-left: -64px;
+    /*background-color: #EEEEEE; */
+    color: #323A4C;
+}
+.onoffswitch-inner:after {
+    /*content: "DISABLED";*/
+    content: '';
+    margin-left: 24px;
+    /*background-color: #EEEEEE; */
+    color: #999999;
+}
+.onoffswitch-switch {
+    display: block; width: 18px; height: 18px; margin: 6px;
+    /*background: #EF5350;*/
+    background: #FFA726;
+    position: absolute; top: 0; bottom: 0;
+    transform: initial;
+    
+    transition: all 0.22s ease-in 0s; 
+}
+.onoffswitch-checkbox + .onoffswitch-label {
+	transition: all 0.22s cubic-bezier(0.4, 0.0, 0.2, 1) 0s; 
+	/*border: 2px solid #EF5350;*/
+	border: 1px solid #ccc;
+}
+.onoffswitch-checkbox:checked + .onoffswitch-label {
+	border: 1px solid #32D187;
+
+}
+.onoffswitch-checkbox:checked + .onoffswitch-label .onoffswitch-inner {
+	background: #32D187;
+	transform: translateX(32px);
+}
+
+.system-time-module {
+	justify-content: flex-end;
+	align-items: center;
+	font-size: 2rem;
+}
+
+.system-time-module .button {
+	margin-bottom: 0;
+}
+#system-time-module--time-container {
+	font-family: 'Fira Mono';
+	margin: 0 1rem;
+}
+
+button.button {
+	font-family: 'Cabin', sans-serif;
+ 	font-weight: 300;	
+}
+
+button.button[disabled], button.button:disabled {
+	pointer-events: none;
+	color: #ddd;
+	border-color: #ddd;
+}

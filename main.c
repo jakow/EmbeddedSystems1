@@ -124,7 +124,7 @@ void Main_task(uint_32 initial_data) {
 	//initialise alarm structs
 	init_room_alarms();
 	// run slave tasks
-	_task_create(0, FLASH_TASK, 0); //processor, task name, parameter
+	_task_create(0, FLASH_TASK, 0); //(processor, task name, parameter)
 	_task_create(0, BUTTON_TASK, 0);
 	// run server
 	httpd_server_run(http_server);

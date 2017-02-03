@@ -4,3 +4,5 @@ main.o
 main.d
 rtcs_init.o
 rtcs_init.d
+node_modules
+

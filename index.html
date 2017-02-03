@@ -4,14 +4,108 @@
 <head>
 	<title>Security</title>
 	<meta charset="utf-8"> 
+	<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300italic,700,700italic">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/5.0.0/normalize.min.css">
-	<style type="text/css">
-	</style>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css">
+	<link rel="stylesheet" type="text/css" href="style.css" inline>
 </head>
-<body>
-<p>Hello World!</p>
-<script type="text/javascript">
-	console.log("Test!");
+<body class="">
+
+<div class="container main-container">
+	<div class="top-bar">
+		<div class="brand left">
+			<img class="logo" src="security_color.svg">
+			<span class="logo-name">Home Security</span>
+		</div>
+		<div class="right" style="font-size: 2rem; text-transform: uppercase;">Alarm status</div>
+
+	</div>
+	<div>
+	<div class="grid-row">
+		<div class="grid-cell room">
+			<div class="room--name">Living room</div>
+			<div>
+				<div class="onoffswitch">
+	    			<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="switch1" checked>
+	    			<label class="onoffswitch-label" for="switch1">
+	        			<span class="onoffswitch-inner"></span>
+	    			</label>
+				</div>
+			</div>
+			<p class="room--status">Checking...</p>
+			<div>
+				<button class="button" disabled>Silence alarm</button>
+			</div>
+			<div class="room--alarm-scheduler">
+				<p>Scheduled alarm</p>
+				<div>
+				<span class="scheduled-time">00:11:12	</span><span> <button class="button">Set</button></span>
+				</div>
+			</div>
+		</div>
+		<div class="grid-cell room">
+			<div class="room--name">Kitchen</div>
+			
+			<div>
+				<div class="onoffswitch">
+	    			<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="switch2" checked>
+	    			<label class="onoffswitch-label" for="switch2">
+	        			<span class="onoffswitch-inner"></span>
+	    			</label>
+				</div>
+
+			</div>
+			<p class="room--status">Checking...</p>
+			<div>
+				<button class="button" disabled>Silence alarm</button>
+			</div>
+		</div>
+		<div class="grid-cell room">
+			<div class="room--name">Bedroom</div>
+			
+			<div>
+				<div class="onoffswitch">
+	    			<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="switch3" checked>
+	    			<label class="onoffswitch-label" for="switch3">
+	        			<span class="onoffswitch-inner"></span>
+	    			</label>
+				</div>
+			</div>
+			<p  class="room--status">Checking...</p>
+			<div>
+				<button class="button" disabled>Silence alarm</button>
+			</div>
+		</div>
+		<div class="grid-cell room">
+		<div class="room--name">Garage</div>
+		
+			<div>
+				<div class="onoffswitch">
+	    			<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="switch4" checked>
+	    			<label class="onoffswitch-label" for="switch4">
+	        			<span class="onoffswitch-inner"></span>
+	    			</label>
+				</div>
+			</div>
+			<p class="room--status">Checking...</p>
+			<div>
+				<button class="button" disabled>Silence alarm</button>
+			</div>
+		</div>
+
+	</div>
+	</div>
+	<div class="grid-row">
+		<div class="grid-cell system-time-module top-bar">
+			<span>System time: </span><span id="system-time-module--time-container">00:01:12</span>
+			<a class="button set-time">Set time</a>
+		</div>
+	</div>
+	<!-- <a class="button" href="javascript: void(0)">Default .button</a> -->
+</div>
+
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/fetch/2.0.2/fetch.min.js"></script>
+<script type="text/javascript" src="main.js">
 	
 </script>
 </body>
