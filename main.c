@@ -80,7 +80,9 @@ typedef enum st { DISABLED, ENABLED, TRIGGERED } status_type;
 
 typedef struct room_alarm_struct {
 	status_type status;
-	unsigned int scheduled_time;
+	int timer_on;
+	unsigned int start_time;
+	unsigned int end_time;
 	int led; // reference to the led
 	int button; // reference to the button
 } room_alarm;
@@ -101,6 +103,7 @@ void enable_all_callback(void *room_alarm_ptr);
 
 
 /* initialise webserver paths */
+_mqx_int set_enable_time(HTTPD_SESSION_STRUCT *);
 _mqx_int hush_one_callback(HTTPD_SESSION_STRUCT *);
 _mqx_int set_status_callback(HTTPD_SESSION_STRUCT *);
 _mqx_int led_status_json(HTTPD_SESSION_STRUCT *);
@@ -172,6 +175,9 @@ void init_room_alarms() {
 		room_alarms[i].led = HMI_GET_LED_ID(i+1);
 		room_alarms[i].button = HMI_GET_BUTTON_ID(i+1);
 		room_alarms[i].status = ENABLED;
+		room_alarms[i].timer_on = 0;
+		room_alarms[i].start_time = 0;
+		room_alarms[i].end_time = 0;
 		//attach alarm trigger callbacks
 		btnled_add_clb(hmi,
 			room_alarms[i].button,
@@ -267,16 +273,33 @@ void led_update(uint_32 toggle_state) {
 // }
 /* EOF */
 
-_mqx_int hush_one_callback(HTTPD_SESSION_STRUCT *session) {
+_mqx_int set_enable_time(HTTPD_SESSION_STRUCT *session) {
+	unsigned int num, start_hr, start_min, start_s, end_hr, end_min, end_s;
+	char buffer[BUFFER_LENGTH];
 
+	sscanf(session->request.urldata, "room=%01u&start=%02u:%02u:%02u&end=%02u:%02u:%02u", &num,
+	                                &start_hr, &start_min, &start_s,
+	                                &end_hr, &end_min, &end_s);
+
+	room_alarms[num].start_time = 3600*start_hr + 60*start_min + start_s;
+	room_alarms[num].end_time = 3600*end_hr + 60*end_min + end_s;
+	room_alarms[num].timer_on = 1;
+
+	snprintf(buffer, BUFFER_LENGTH, "Room %01u alarm enabled at %02u:%02u:%02u and disabled at %02u:%02u:%02u", num,
+	                                start_hr, start_min, start_s,
+	                                end_hr, end_min, end_s
+);
+	httpd_sendstr(session->sock, buffer);
+	return session->request.content_len;
 }
+/* EOF */
 
 _mqx_int set_status_callback(HTTPD_SESSION_STRUCT *session) {
   char buffer[32];
-  int num, enabled;
-  sscanf(session->request.urldata, "room=%u&enabled=%u", &num, &enabled);
-  room_alarms[num].status = (status_type) enabled;
-  sprintf(buffer, "{ \"status\" : %u }", enabled);
+  int num, status;
+  sscanf(session->request.urldata, "room=%u&status=%u", &num, &status);
+  room_alarms[num].status = (status_type) status;
+  sprintf(buffer, "{ \"status\" : %u }", status);
   httpd_sendstr(session->sock, buffer);
   return session->request.content_len;
 }
@@ -299,10 +322,10 @@ _mqx_int led_status_json(HTTPD_SESSION_STRUCT *session) {
 _mqx_int alarm_status_json(HTTPD_SESSION_STRUCT *session) {
 	char buffer[512];
   sprintf(buffer, (const char*) status_json,
-          room_alarms[0].status,  room_alarms[0].scheduled_time,
-          room_alarms[1].status, room_alarms[1].scheduled_time,
-          room_alarms[2].status, room_alarms[2].scheduled_time,
-          room_alarms[3].status, room_alarms[3].scheduled_time);
+          room_alarms[0].status, room_alarms[0].timer_on, room_alarms[0].start_time, room_alarms[0].end_time,
+          room_alarms[1].status, room_alarms[1].timer_on, room_alarms[1].start_time, room_alarms[1].end_time,
+          room_alarms[2].status, room_alarms[2].timer_on, room_alarms[2].start_time, room_alarms[2].end_time,
+          room_alarms[3].status, room_alarms[3].timer_on, room_alarms[3].start_time, room_alarms[3].end_time);
   httpd_sendstr(session->sock, buffer);
   return session->request.content_len;
 }
