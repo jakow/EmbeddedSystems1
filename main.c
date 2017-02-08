@@ -76,7 +76,7 @@ const TFS_DIR_ENTRY static_data[] = {
 typedef struct room_alarm_struct {
 	uint_8 enabled;
 	uint_8 triggered;
-	RTC_TIME_STRUCT scheduled_time;
+	unsigned int scheduled_time;
 	int led; // reference to the led
 	int button; // reference to the button 
 } room_alarm;
@@ -265,6 +265,7 @@ _mqx_int hush_one_callback(HTTPD_SESSION_STRUCT *session) {
 _mqx_int set_enable_status_callback(HTTPD_SESSION_STRUCT *session) {
 
 }
+
 _mqx_int led_status_json(HTTPD_SESSION_STRUCT *session) {
 	char buffer[BUFFER_LENGTH];
 	unsigned char i;
