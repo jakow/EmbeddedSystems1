@@ -42,7 +42,7 @@
 #endif
 
 
-#define BUFFER_LENGTH 64
+#define BUFFER_LENGTH 256
 #define N_ROOMS 4
 
 TASK_TEMPLATE_STRUCT MQX_template_list[] =
@@ -103,17 +103,19 @@ void enable_all_callback(void *room_alarm_ptr);
 
 
 /* initialise webserver paths */
+_mqx_int get_timer_status(HTTPD_SESSION_STRUCT *);
 _mqx_int set_enable_time(HTTPD_SESSION_STRUCT *);
-_mqx_int hush_one_callback(HTTPD_SESSION_STRUCT *);
 _mqx_int set_status_callback(HTTPD_SESSION_STRUCT *);
 _mqx_int led_status_json(HTTPD_SESSION_STRUCT *);
 _mqx_int alarm_status_json(HTTPD_SESSION_STRUCT *);
 
 
 static HTTPD_CGI_LINK_STRUCT http_cgi_params[] = {
-  { "set_status", set_status_callback},
+	{ "timer_status", get_timer_status },
+	{ "set_enable_time", set_enable_time },
+	{ "set_status", set_status_callback},
 	{ "led_status", led_status_json },
-  { "alarm_status", alarm_status_json },
+	{ "alarm_status", alarm_status_json },
 	{ 0, 0 }
 };
 
@@ -272,23 +274,28 @@ void led_update(uint_32 toggle_state) {
 // 	return session->request.content_len;
 // }
 /* EOF */
+_mqx_int get_timer_status(HTTPD_SESSION_STRUCT *session) {
+	int num;
+	char buffer[BUFFER_LENGTH];
+	sscanf(session->request.urldata, "room=%01u", &num);
+	sprintf(buffer, "{ \"Room\" : %01u, \"timer_status\" : %01u, \"start_time\" : %u, \"end_time\" : %u }", 
+		num, room_alarms[num].timer_on, room_alarms[num].start_time, 
+		room_alarms[num].end_time);
+	httpd_sendstr(session->sock, buffer);
+	return session->request.content_len;
+}
+
 
 _mqx_int set_enable_time(HTTPD_SESSION_STRUCT *session) {
-	unsigned int num, start_hr, start_min, start_s, end_hr, end_min, end_s;
+	unsigned int num;
 	char buffer[BUFFER_LENGTH];
 
-	sscanf(session->request.urldata, "room=%01u&start=%02u:%02u:%02u&end=%02u:%02u:%02u", &num,
-	                                &start_hr, &start_min, &start_s,
-	                                &end_hr, &end_min, &end_s);
-
-	room_alarms[num].start_time = 3600*start_hr + 60*start_min + start_s;
-	room_alarms[num].end_time = 3600*end_hr + 60*end_min + end_s;
+	sscanf(session->request.urldata, "room=%01u&start=%u&end=%u", &num, 
+		&room_alarms[num].start_time, &room_alarms[num].end_time);
 	room_alarms[num].timer_on = 1;
 
-	snprintf(buffer, BUFFER_LENGTH, "Room %01u alarm enabled at %02u:%02u:%02u and disabled at %02u:%02u:%02u", num,
-	                                start_hr, start_min, start_s,
-	                                end_hr, end_min, end_s
-);
+	sprintf(buffer, "{ \"Room\" : %01u, \"start_time\" : %u, \"end_time\" : %u }", 
+						num, room_alarms[num].start_time, room_alarms[num].end_time);
 	httpd_sendstr(session->sock, buffer);
 	return session->request.content_len;
 }
