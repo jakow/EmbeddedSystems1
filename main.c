@@ -268,7 +268,7 @@ _mqx_int set_system_time(HTTPD_SESSION_STRUCT *session) {
 	sscanf(session->request.urldata, "%u", &new_time.seconds);
 	_rtc_set_time(&new_time);
 
-	snprintf(buffer, BUFFER_LENGTH, "Time set to %u", new_time.seconds);
+	sprintf(buffer, "{ \"system_time\" : %u }", new_time.seconds);
 	httpd_sendstr(session->sock, buffer);
 	return session->request.content_len;
 }
@@ -277,7 +277,7 @@ _mqx_int get_timer_status(HTTPD_SESSION_STRUCT *session) {
 	int num;
 	char buffer[BUFFER_LENGTH];
 	sscanf(session->request.urldata, "room=%01u", &num);
-	sprintf(buffer, "{ \"Room\" : %01u, \"timer_status\" : %01u, \"start_time\" : %u, \"end_time\" : %u }", 
+	sprintf(buffer, "{ \"room\" : %01u, \"timer_status\" : %01u, \"start_time\" : %u, \"end_time\" : %u }", 
 		num, room_alarms[num].timer_on, room_alarms[num].start_time, 
 		room_alarms[num].end_time);
 	httpd_sendstr(session->sock, buffer);
@@ -293,7 +293,7 @@ _mqx_int set_enable_time(HTTPD_SESSION_STRUCT *session) {
 		&room_alarms[num].start_time, &room_alarms[num].end_time);
 	room_alarms[num].timer_on = 1;
 
-	sprintf(buffer, "{ \"Room\" : %01u, \"start_time\" : %u, \"end_time\" : %u }", 
+	sprintf(buffer, "{ \"room\" : %01u, \"start_time\" : %u, \"end_time\" : %u }", 
 						num, room_alarms[num].start_time, room_alarms[num].end_time);
 	httpd_sendstr(session->sock, buffer);
 	return session->request.content_len;
