@@ -65,7 +65,10 @@ static HTTPD_ROOT_DIR_STRUCT http_root_dir[] = {
 
 
 const TFS_DIR_ENTRY static_data[] = {
-		{"/index.html",	0, WEBPAGE, 	sizeof(WEBPAGE)},
+		{"/index.html",	0, index_html, 	sizeof(index_html)},
+		{"/script.js",	0, script_js, 	sizeof(script_js)},
+		{"/style.css",	0, style_css, 	sizeof(style_css)},
+		{"/logo.svg",	0, logo_svg, 	sizeof(logo_svg)},
 		{0,				0, 0,					0}
 	};
 
@@ -73,6 +76,7 @@ const TFS_DIR_ENTRY static_data[] = {
 typedef struct room_alarm_struct {
 	uint_8 enabled;
 	uint_8 triggered;
+	RTC_TIME_STRUCT scheduled_time;
 	int led; // reference to the led
 	int button; // reference to the button 
 } room_alarm;
@@ -88,13 +92,17 @@ void led_update();
 /* button/touch sensor callbacks*/
 void trigger_alarm_callback(void *room_alarm_ptr);
 void hush_all_callback(void *room_alarm_ptr);
-void enable_all_callback(void *room_alarm_ptr); 
+void enable_all_callback(void *room_alarm_ptr);
+
+
 /* initialise webserver paths */
 _mqx_int alarm_status_json(HTTPD_SESSION_STRUCT *);
 _mqx_int led_callback(HTTPD_SESSION_STRUCT *);
 _mqx_int led_status_json(HTTPD_SESSION_STRUCT *);
 _mqx_int rtc_get_callback(HTTPD_SESSION_STRUCT *);
 _mqx_int rtc_set_callback(HTTPD_SESSION_STRUCT *);
+void hush_one_callback(HTTPD_SESSION_STRUCT *);
+void set_enable_status_callback(HTTPD_SESSION_STRUCT *)
 
 static HTTPD_CGI_LINK_STRUCT http_cgi_params[] = {
 	{ "led", led_callback },
@@ -260,11 +268,17 @@ _mqx_int led_status_json(HTTPD_SESSION_STRUCT *session) {
 	unsigned char i;
 	uint_32 status[4];
 	for (i = 0; i < 4; ++i) {
-		btnled_get_value(hmi, HMI_GET_LED_ID(i), &status[i]);
+		btnled_get_value(hmi, HMI_GET_LED_ID(i+1), &status[i]);
 	}
 	snprintf(buffer, BUFFER_LENGTH, 
 		"{ \"leds\": [%u, %u, %u, %u] }\n\0", !status[0], !status[1], !status[2], !status[3]);
 
 	httpd_sendstr(session->sock, buffer);
 	return session->request.content_len;
+}
+
+
+_mqx_int alarm_status_json(HTTPD_SESSION_STRUCT *session) {
+	char buffer[256];
+	
 }

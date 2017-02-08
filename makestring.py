@@ -23,6 +23,7 @@ def write_string(file, varname, content):
 webpage = make_string('index.html')
 style = make_string('style.css')
 script = make_string('script.js')
+logo = make_string('logo.svg')
 
 
 
@@ -30,5 +31,6 @@ with open('webpage.h', 'w') as out_file:
 	write_string(out_file, "WEBPAGE", webpage)
 	write_string(out_file, "STYLE", style)
 	write_string(out_file, "SCRIPT", script)
+	write_string(out_file, "LOGO", logo)
 
 

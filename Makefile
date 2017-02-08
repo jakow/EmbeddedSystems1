@@ -29,8 +29,19 @@ main : webpage.h $(OBJECTS)
 	$(LD) $(LDFLAGS) $(STARTUP) $^ $(LDFLAGS) -o $@
 
 # Recipe for webpage string
-webpage.h : index.html
-	python makestring.py
+webpage.h : index.html style.css script.js
+	xxd -i index.html >> index.h
+	xxd -i script.js >> script.h
+	xxd -i style.css >> style.h
+	xxd -i logo.svg >> logo.h
+	xxd -i status.json >> status.h
+	cat index.h >> webpage.h
+	cat style.h >> webpage.h
+	cat logo.h >> webpage.h
+	cat script.h >> webpage.h
+	cat status.h >> webpage.h
+	rm index.h script.h style.h logo.h status.h
+
 	
 # Recipe to make each individual object file
 %.o : %.c

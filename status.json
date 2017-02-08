@@ -1,0 +1,19 @@
+{
+	"alarms": [
+			{"enabled": %u,
+			"triggered": %u,
+		"scheduled_time": "%s"},
+
+			{"enabled": %u,
+			"triggered": %u
+		"scheduled_time": "%s"},
+
+			{"enabled": %u,
+			"triggered": %u
+		"scheduled_time": "%s"},
+
+			{"enabled": %u,
+			"triggered": %u
+			"scheduled_time": "%s"},
+	]
+}
