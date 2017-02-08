@@ -102,13 +102,12 @@ AlarmControl.prototype.pushStatus = function(enabled) {
 	}.bind(this))
 	.catch(function(err) {
 		this.setStatus(ERROR);
+		this.pushingStateFlag = false;
 	}.bind(this));
 
 }
 
-function updateTime(time) {
-	systemTimeEl.innerHTML = time.toString();
-}
+
 
 function updateStatus(alarms, statusArr) {
 
@@ -123,12 +122,24 @@ function updateStatus(alarms, statusArr) {
 		document.body.classList.remove('alarm');
 }
 
+function setTime(time) {
+	var hr, min, sec;
+	hr = Math.floor(time / 3600);
+	min = Math.floor(time % 3600/60);
+	sec = time % 60;
+	hrStr = hr < 10 ? "0" + hr : "" + hr;
+	minStr = min < 10 ? "0" + min : "" + min;
+	secStr = sec < 10 ? "0" + sec : "" + sec;
+	systemTimeEl.innerHTML = hrStr + ":" + minStr + ":" + secStr;
+}
+
 function fetchStatus(alarms) {
 	/* fetch system status */
 	fetch("/alarm_status.cgi").then(function(response) {
 		return response.json();
 	})
 	.then(function(json) {
+		setTime(json.system_time);
 		updateStatus(alarms, json.alarms);
 	})
 	.catch(function(err) {
@@ -138,11 +149,14 @@ function fetchStatus(alarms) {
 	});
 }
 
+var systemTimeEl = document.getElementById('system-time-module--time-container');
 
 function init() {
 	var elems = Array.prototype.slice.call(document.querySelectorAll('.room'));
-	var alarms = elems.map(function(elem, id) {return new AlarmControl(elem, id) });
-	var systemTimeEl = document.getElementById('system-time-module--time-container');
+	var alarms = elems.map(function(elem, id) {
+		return new AlarmControl(elem, id) 
+	});
+	
 	fetchStatus(alarms);
 	var interval = setInterval(function () {
 		fetchStatus(alarms)
