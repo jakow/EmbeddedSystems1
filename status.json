@@ -2,19 +2,27 @@
 "alarms": [
 	{
 		"status": %u,
-		"sched_time": %u
+		"timer_status": %u,
+		"start_time" : %u,
+		"end_time" : %u
 	},
 	{
 		"status": %u,
-		"sched_time": %u
+		"timer_status": %u,
+		"start_time" : %u,
+		"end_time" : %u
 	},
 	{
 		"status": %u,
-		"sched_time": %u
+		"timer_status": %u,
+		"start_time" : %u,
+		"end_time" : %u
 	},
 	{
 		"status": %u,
-		"sched_time": %u
+		"timer_status": %u,
+		"start_time" : %u,
+		"end_time" : %u
 	}
 ],
 "system_time": %u
