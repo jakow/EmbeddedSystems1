@@ -289,6 +289,12 @@ _mqx_int led_status_json(HTTPD_SESSION_STRUCT *session) {
 
 
 _mqx_int alarm_status_json(HTTPD_SESSION_STRUCT *session) {
-	char buffer[256];
-
+	char buffer[512];
+  sprintf(buffer, status_json,
+          alarms[0].enabled, alarms[0].triggered, alarms[0].scheduled_time,
+          alarms[1].enabled, alarms[1].triggered, alarms[1].scheduled_time,
+          alarms[2].enabled, alarms[2].triggered, alarms[2].scheduled_time,
+          alarms[3].enabled, alarms[3].triggered, alarms[3].scheduled_time);
+  httpd_sendstr(session->sock, buffer);
+  return session->request.content_len;
 }
