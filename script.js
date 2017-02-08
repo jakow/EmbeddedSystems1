@@ -11,6 +11,8 @@ function AlarmControl(parentEl, id) {
 	this.status = CHECKING;
 
 	//
+	this.pushingStateFlag = false;
+
 	this.parent = parentEl;
 	this.enableButton = this.parent.querySelectorAll('.onoffswitch-checkbox')[0];
 	this.statusEl = this.parent.querySelectorAll('.room--status')[0];
@@ -24,13 +26,12 @@ function AlarmControl(parentEl, id) {
 	// this.setEnabledState(true);
 	this.enableButton.onclick = function () {
 		this.pushStatus(this.enableButton.checked);
-		this.hushButton.disabled = !this.enableButton.checked;
 	}.bind(this);
 
 	this.hushButton.onclick = function () {
 		// hush button only active when the alarm is triggered
 		this.pushStatus(ENABLED);
-	}
+	}.bind(this);
 }
 
 AlarmControl.prototype.initialiseIncrements = function() {
@@ -88,6 +89,7 @@ AlarmControl.prototype.setStatus = function(status) {
 
 
 AlarmControl.prototype.pushStatus = function(enabled) {
+	this.pushingStateFlag = true;
 	// this.setStatus(enabled ? ENABLED : DISABLED); // set status eagerly
 	var url = "/set_status.cgi?room="+ this.id+ "&status=" + (enabled ? "1" : "0");
 	fetch(url)
@@ -96,10 +98,12 @@ AlarmControl.prototype.pushStatus = function(enabled) {
 			this.setStatus(enabled);	
 		else
 			this.setStatus(ERROR); // if failed roll back
+		this.pushingStateFlag = false;
 	}.bind(this))
 	.catch(function(err) {
 		this.setStatus(ERROR);
 	}.bind(this));
+
 }
 
 function updateTime(time) {
@@ -109,7 +113,8 @@ function updateTime(time) {
 function updateStatus(alarms, statusArr) {
 
 	alarms.forEach(function(item, idx) {
-		item.setStatus(statusArr[idx].status);
+		if (!item.pushingStateFlag) // pushStatus has priority
+			item.setStatus(statusArr[idx].status);
 		// item.setScheduledTime(statusArr[idx].sched_time);
 	});
 	if (alarms.some(function(alarm) {return alarm.status == TRIGGERED}))

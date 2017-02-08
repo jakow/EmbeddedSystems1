@@ -286,7 +286,7 @@ _mqx_int get_timer_status(HTTPD_SESSION_STRUCT *session) {
 
 
 _mqx_int set_enable_time(HTTPD_SESSION_STRUCT *session) {
-	unsigned int num;
+	unsigned int num = 0;
 	char buffer[BUFFER_LENGTH];
 
 	sscanf(session->request.urldata, "room=%01u&start=%u&end=%u", &num, 
