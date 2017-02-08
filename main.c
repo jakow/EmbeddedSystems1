@@ -89,6 +89,7 @@ room_alarm room_alarms[N_ROOMS];
 void init_room_alarms();
 void init_pushbuttons();
 void led_update();
+
 /* button/touch sensor callbacks*/
 void trigger_alarm_callback(void *room_alarm_ptr);
 void hush_all_callback(void *room_alarm_ptr);
@@ -96,15 +97,16 @@ void enable_all_callback(void *room_alarm_ptr);
 
 
 /* initialise webserver paths */
+_mqx_int hush_one_callback(HTTPD_SESSION_STRUCT *);
+_mqx_int set_status_callback(HTTPD_SESSION_STRUCT *);
+_mqx_int led_status_json(HTTPD_SESSION_STRUCT *);
 _mqx_int alarm_status_json(HTTPD_SESSION_STRUCT *);
-void hush_one_callback(HTTPD_SESSION_STRUCT *);
-void set_enable_status_callback(HTTPD_SESSION_STRUCT *)
+
 
 static HTTPD_CGI_LINK_STRUCT http_cgi_params[] = {
-	{ "led", led_callback },
-	{ "get_time", rtc_get_callback },
-	{ "set_time", rtc_set_callback },
+  { "set_status", set_status_callback},
 	{ "led_status", led_status_json },
+  { "alarm_status", alarm_status_json },
 	{ 0, 0 }
 };
 
@@ -151,11 +153,10 @@ void Button_task(uint_32 initial_data) {
 void Flash_task(uint_32 initial_data) {
 	uint_32 toggle_state;
 	toggle_state = 0;
-	led_update(); // initial led update
+	led_update(toggle_state); // initial led update
 	while(TRUE) {
-		_time_delay(200);
-		toggle_state = !toggle_state;
-		led_update(toggle_state);
+    HTTPD_STRUCT* http_server;
+    led_update(toggle_state);
 	}
 }
 
@@ -189,9 +190,9 @@ void trigger_alarm_callback(void *room_alarm_ptr) {
 void hush_all_callback(void *room_alarm_ptr) {
 	int i;
 	// mutex lock
-	for (i = 0; i < N_ROOMS; ++i) { //disable all alarms
-		room_alarms[i].triggered = FALSE;
-		room_alarms[i].enabled = FALSE;
+	for (i = 0; i < N_ROOMS; ++i) {
+    room_alarms[i].triggered = FALSE;
+    room_alarms[i].enabled = FALSE;
 	}
 	//mutex unlock
 }
@@ -205,21 +206,21 @@ void enable_all_callback(void *room_alarm_ptr) {
 	// mutex unlock
 }
 
-// void led_update(uint_32 toggle_state) {
-// 	int i;
-// 	//mutex lock
-// 	for (i = 0; i < N_ROOMS; ++i) {
-// 		if (room_alarms[i].triggered) {
-// 			btnled_set_value(hmi, room_alarms[i].led, toggle_state);
-// 		}
-// 		else if(room_alarms[i].enabled) {
-// 			btnled_set_value(hmi, room_alarms[i].led, HMI_VALUE_ON);
-// 		}
-// 		else {
-// 			btnled_set_value(hmi, room_alarms[i].led, HMI_VALUE_OFF);
-// 		}
-// 	}
-// 	// mutex unlock
+void led_update(uint_32 toggle_state) {
+	int i;
+	//mutex lock
+	for (i = 0; i < N_ROOMS; ++i) {
+		if (room_alarms[i].triggered) {
+			btnled_set_value(hmi, room_alarms[i].led, toggle_state);
+		}
+		else if(room_alarms[i].enabled) {
+			btnled_set_value(hmi, room_alarms[i].led, HMI_VALUE_ON);
+		}
+		else {
+			btnled_set_value(hmi, room_alarms[i].led, HMI_VALUE_OFF);
+		}
+	}
+	// mutex unlock
 }
 
 // _mqx_int led_callback(HTTPD_SESSION_STRUCT *session) {
@@ -290,11 +291,11 @@ _mqx_int led_status_json(HTTPD_SESSION_STRUCT *session) {
 
 _mqx_int alarm_status_json(HTTPD_SESSION_STRUCT *session) {
 	char buffer[512];
-  sprintf(buffer, status_json,
-          alarms[0].enabled, alarms[0].triggered, alarms[0].scheduled_time,
-          alarms[1].enabled, alarms[1].triggered, alarms[1].scheduled_time,
-          alarms[2].enabled, alarms[2].triggered, alarms[2].scheduled_time,
-          alarms[3].enabled, alarms[3].triggered, alarms[3].scheduled_time);
+  printf(buffer, (const char*) status_json,
+          room_alarms[0].enabled, room_alarms[0].triggered, room_alarms[0].scheduled_time,
+          room_alarms[1].enabled, room_alarms[1].triggered, room_alarms[1].scheduled_time,
+          room_alarms[2].enabled, room_alarms[2].triggered, room_alarms[2].scheduled_time,
+          room_alarms[3].enabled, room_alarms[3].triggered, room_alarms[3].scheduled_time);
   httpd_sendstr(session->sock, buffer);
   return session->request.content_len;
 }
