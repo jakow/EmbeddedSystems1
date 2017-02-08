@@ -1,19 +1,20 @@
 {
-	"alarms": [
-			{"enabled": %u,
-			"triggered": %u,
-		"scheduled_time": "%s"},
-
-			{"enabled": %u,
-			"triggered": %u
-		"scheduled_time": "%s"},
-
-			{"enabled": %u,
-			"triggered": %u
-		"scheduled_time": "%s"},
-
-			{"enabled": %u,
-			"triggered": %u
-			"scheduled_time": "%s"},
-	]
+"alarms": [
+	{
+		"status": %u,
+		"sched_time": %u
+	},
+	{
+		"status": %u,
+		"sched_time": %u
+	},
+	{
+		"status": %u,
+		"sched_time": %u
+	},
+	{
+		"status": %u,
+		"sched_time": %u
+	}
+]
 }

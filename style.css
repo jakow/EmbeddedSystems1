@@ -257,3 +257,64 @@ button.button[disabled], button.button:disabled {
 	color: #ddd;
 	border-color: #ddd;
 }
+
+
+
+.room--time-schedule .incs > a, .room--time-schedule .decs > a {
+	background: #eee;
+	width: 16px;
+	height: 16px;
+	border: 1px solid #bbb;
+	border-radius: 2px;
+	line-height: 100%;
+	display: inline-block;
+	margin-top: 2px;
+	margin-bottom: 2px;
+	text-decoration: none;
+	transition: opacity 0.1s ease-in;
+
+}
+
+.room--time-schedule {
+	display: inline-flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+.room--time-schedule > div+div {
+	margin-left: 2rem;
+}
+
+.room--time-schedule .change-schedule {
+	width: 112px;
+
+}
+
+.room--time-schedule .change-schedule.set {
+	background: #32D187;
+}
+.room--time-schedule .time {
+	font-family: 'Fira Mono';
+}
+
+.room--time-schedule .incs > a+a, .room--time-schedule .decs > a+a {
+	margin-left: 5px;
+}
+
+.room--time-schedule .incs > *::before, .room--time-schedule .decs > *::before {
+	color: #555;
+	line-height: 16px;
+	font-size: 10px;
+}
+.room--time-schedule .incs > *::before {
+	
+	content: '\25B2';
+
+}
+
+.room--time-schedule .decs > *::before {
+	content: '\25BC';
+
+}
+
+

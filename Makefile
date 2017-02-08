@@ -29,13 +29,13 @@ main : webpage.h $(OBJECTS)
 	$(LD) $(LDFLAGS) $(STARTUP) $^ $(LDFLAGS) -o $@
 
 # Recipe for webpage string
-webpage.h : index.html style.css script.js
-	xxd -i index.html >> index.h
-	xxd -i script.js >> script.h
-	xxd -i style.css >> style.h
-	xxd -i logo.svg >> logo.h
-	xxd -i status.json >> status.h
-	cat index.h >> webpage.h
+webpage.h : index.html style.css script.js status.json
+	xxd -i index.html > index.h
+	xxd -i script.js > script.h
+	xxd -i style.css > style.h
+	xxd -i logo.svg > logo.h
+	xxd -i status.json | sed s/}\;/,0x00}\;/ > status.h
+	cat index.h > webpage.h
 	cat style.h >> webpage.h
 	cat logo.h >> webpage.h
 	cat script.h >> webpage.h

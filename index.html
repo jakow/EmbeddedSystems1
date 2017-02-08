@@ -20,11 +20,10 @@
 		<div class="right" style="font-size: 2rem; text-transform: uppercase;">Alarm status</div>
 
 	</div>
-	<div>
 	<div class="grid-row">
 		<div class="grid-cell room">
 			<div class="room--name">Living room</div>
-			<div>
+			<div class="room--onoff-control">
 				<div class="onoffswitch">
 	    			<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="switch1" checked>
 	    			<label class="onoffswitch-label" for="switch1">
@@ -33,73 +32,40 @@
 				</div>
 			</div>
 			<p class="room--status">Checking...</p>
-			<div>
-				<button class="button" disabled>Silence alarm</button>
+			<div class="room--silence-control">
+				<button class="hush button" disabled>Hush alarm</button>
 			</div>
-			<div class="room--alarm-scheduler">
-				<p>Scheduled alarm</p>
-				<div>
-				<span class="scheduled-time">00:11:12	</span><span> <button class="button">Set</button></span>
+			<!-- -->
+			<div class="room--time-schedule">
+			<div class="time-container">
+				<div class="incs">
+					<a href="#" class="hr"></a>
+					<a href="#" class="min"></a>
+					<a href="#" class="sec"></a>
+				</div>
+				<div class="time">10:20:30</div>
+				<div class="decs">
+					<a href="#" class="hr"></a>
+					<a href="#" class="min"></a>
+					<a href="#" class="sec"></a>
 				</div>
 			</div>
-		</div>
-		<div class="grid-cell room">
-			<div class="room--name">Kitchen</div>
-			
 			<div>
-				<div class="onoffswitch">
-	    			<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="switch2" checked>
-	    			<label class="onoffswitch-label" for="switch2">
-	        			<span class="onoffswitch-inner"></span>
-	    			</label>
-				</div>
-
+				<button class="button change-schedule">Change</button>
 			</div>
-			<p class="room--status">Checking...</p>
-			<div>
-				<button class="button" disabled>Silence alarm</button>
-			</div>
-		</div>
-		<div class="grid-cell room">
-			<div class="room--name">Bedroom</div>
-			
-			<div>
-				<div class="onoffswitch">
-	    			<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="switch3" checked>
-	    			<label class="onoffswitch-label" for="switch3">
-	        			<span class="onoffswitch-inner"></span>
-	    			</label>
-				</div>
-			</div>
-			<p  class="room--status">Checking...</p>
-			<div>
-				<button class="button" disabled>Silence alarm</button>
-			</div>
-		</div>
-		<div class="grid-cell room">
-		<div class="room--name">Garage</div>
-		
-			<div>
-				<div class="onoffswitch">
-	    			<input type="checkbox" name="onoffswitch" class="onoffswitch-checkbox" id="switch4" checked>
-	    			<label class="onoffswitch-label" for="switch4">
-	        			<span class="onoffswitch-inner"></span>
-	    			</label>
-				</div>
-			</div>
-			<p class="room--status">Checking...</p>
-			<div>
-				<button class="button" disabled>Silence alarm</button>
 			</div>
 		</div>
 
 	</div>
-	</div>
+
+
+
 	<div class="grid-row">
 		<div class="grid-cell system-time-module top-bar">
 			<span>System time: </span><span id="system-time-module--time-container">00:01:12</span>
 			<a class="button set-time">Set time</a>
 		</div>
+
 	</div>
 	
 </div>

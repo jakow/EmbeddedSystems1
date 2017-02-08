@@ -35,6 +35,8 @@
 #include <httpd_types.h>
 #include "webpage.h"
 
+
+
 #if defined(APPLICATION_HAS_SHELL) && (!SHELLCFG_USES_RTCS)
 #error This application requires SHELLCFG_USES_RTCS defined non-zero in user_config.h. Please recompile libraries with this option if any Ethernet interface is available.
 #endif
@@ -73,9 +75,11 @@ const TFS_DIR_ENTRY static_data[] = {
 	};
 
 /*  type definitions */
+
+typedef enum st { DISABLED, ENABLED, TRIGGERED } status_type;
+
 typedef struct room_alarm_struct {
-	uint_8 enabled;
-	uint_8 triggered;
+	status_type status;
 	unsigned int scheduled_time;
 	int led; // reference to the led
 	int button; // reference to the button
@@ -92,7 +96,7 @@ void led_update();
 
 /* button/touch sensor callbacks*/
 void trigger_alarm_callback(void *room_alarm_ptr);
-void hush_all_callback(void *room_alarm_ptr);
+void disable_all_callback(void *room_alarm_ptr);
 void enable_all_callback(void *room_alarm_ptr);
 
 
@@ -155,8 +159,9 @@ void Flash_task(uint_32 initial_data) {
 	toggle_state = 0;
 	led_update(toggle_state); // initial led update
 	while(TRUE) {
-    HTTPD_STRUCT* http_server;
-    led_update(toggle_state);
+    	led_update(toggle_state);
+    	_time_delay(200);
+    	toggle_state = !toggle_state;
 	}
 }
 
@@ -166,8 +171,7 @@ void init_room_alarms() {
 	for (i = 0; i < N_ROOMS; ++i) {
 		room_alarms[i].led = HMI_GET_LED_ID(i+1);
 		room_alarms[i].button = HMI_GET_BUTTON_ID(i+1);
-		room_alarms[i].enabled = TRUE;
-		room_alarms[i].triggered = FALSE;
+		room_alarms[i].status = ENABLED;
 		//attach alarm trigger callbacks
 		btnled_add_clb(hmi,
 			room_alarms[i].button,
@@ -178,21 +182,21 @@ void init_room_alarms() {
 
 void init_pushbuttons() {
 	btnled_add_clb(hmi, HMI_BUTTON_5, HMI_VALUE_RELEASE, enable_all_callback, NULL);
-	btnled_add_clb(hmi, HMI_BUTTON_6, HMI_VALUE_RELEASE, hush_all_callback, NULL);
+	btnled_add_clb(hmi, HMI_BUTTON_6, HMI_VALUE_RELEASE, disable_all_callback, NULL);
 }
 
 
 void trigger_alarm_callback(void *room_alarm_ptr) {
 	room_alarm* r = (room_alarm*) room_alarm_ptr; // cast to room_alarm
-	if (r->enabled) r->triggered = TRUE; // flash if triggered
+	if (r->status == ENABLED) 
+		r->status = TRIGGERED; // flash if triggered
 }
 
-void hush_all_callback(void *room_alarm_ptr) {
+void disable_all_callback(void *room_alarm_ptr) {
 	int i;
 	// mutex lock
 	for (i = 0; i < N_ROOMS; ++i) {
-    room_alarms[i].triggered = FALSE;
-    room_alarms[i].enabled = FALSE;
+    room_alarms[i].status = DISABLED;
 	}
 	//mutex unlock
 }
@@ -201,7 +205,8 @@ void enable_all_callback(void *room_alarm_ptr) {
 	int i;
 	// mutex lock
 	for (i = 0; i < N_ROOMS; ++i) { //enable all alarms
-		room_alarms[i].enabled = TRUE;
+		if(room_alarms[i].status != TRIGGERED) 
+			room_alarms[i].status = ENABLED;
 	}
 	// mutex unlock
 }
@@ -210,10 +215,11 @@ void led_update(uint_32 toggle_state) {
 	int i;
 	//mutex lock
 	for (i = 0; i < N_ROOMS; ++i) {
-		if (room_alarms[i].triggered) {
+		switch(room_alarms[i].status)
+		if (room_alarms[i].status == TRIGGERED) {
 			btnled_set_value(hmi, room_alarms[i].led, toggle_state);
 		}
-		else if(room_alarms[i].enabled) {
+		else if(room_alarms[i].status == ENABLED) {
 			btnled_set_value(hmi, room_alarms[i].led, HMI_VALUE_ON);
 		}
 		else {
@@ -264,13 +270,12 @@ _mqx_int hush_one_callback(HTTPD_SESSION_STRUCT *session) {
 }
 
 _mqx_int set_status_callback(HTTPD_SESSION_STRUCT *session) {
+  char buffer[32];
   int num, enabled;
   sscanf(session->request.urldata, "room=%u&enabled=%u", &num, &enabled);
-  room_alarms[num].enabled = enabled;
-  if(!enabled) {
-    room_alarms[num].triggered = 0;
-  }
-  httpd_sendstr(session->sock, "{ \"status\" : 1 }");
+  room_alarms[num].status = (status_type) enabled;
+  sprintf(buffer, "{ \"status\" : %u }", enabled);
+  httpd_sendstr(session->sock, buffer);
   return session->request.content_len;
 }
 
@@ -291,11 +296,11 @@ _mqx_int led_status_json(HTTPD_SESSION_STRUCT *session) {
 
 _mqx_int alarm_status_json(HTTPD_SESSION_STRUCT *session) {
 	char buffer[512];
-  printf(buffer, (const char*) status_json,
-          room_alarms[0].enabled, room_alarms[0].triggered, room_alarms[0].scheduled_time,
-          room_alarms[1].enabled, room_alarms[1].triggered, room_alarms[1].scheduled_time,
-          room_alarms[2].enabled, room_alarms[2].triggered, room_alarms[2].scheduled_time,
-          room_alarms[3].enabled, room_alarms[3].triggered, room_alarms[3].scheduled_time);
+  sprintf(buffer, (const char*) status_json,
+          room_alarms[0].status,  room_alarms[0].scheduled_time,
+          room_alarms[1].status, room_alarms[1].scheduled_time,
+          room_alarms[2].status, room_alarms[2].scheduled_time,
+          room_alarms[3].status, room_alarms[3].scheduled_time);
   httpd_sendstr(session->sock, buffer);
   return session->request.content_len;
 }
