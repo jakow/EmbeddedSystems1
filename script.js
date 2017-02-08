@@ -22,9 +22,15 @@ function AlarmControl(parentEl, id) {
 	this.notifyChangedListener = null;
 	this.initialiseIncrements();
 	// this.setEnabledState(true);
-	this.enableButton.onclick = function() {
+	this.enableButton.onclick = function () {
 		this.pushStatus(this.enableButton.checked);
+		this.hushButton.disabled = !this.enableButton.checked;
 	}.bind(this);
+
+	this.hushButton.onclick = function () {
+		// hush button only active when the alarm is triggered
+		this.pushStatus(ENABLED);
+	}
 }
 
 AlarmControl.prototype.initialiseIncrements = function() {
@@ -74,13 +80,15 @@ AlarmControl.prototype.setStatus = function(status) {
 	}.bind(this));
 	this.statusEl.classList.add(statusName);
 	this.statusEl.innerHTML = statusString;
+	this.hushButton.disabled = status != TRIGGERED;
 	if (this.notifyChangedListener != null) this.notifyChangedListener();
+
 }
 
 
 
 AlarmControl.prototype.pushStatus = function(enabled) {
-	this.setStatus(enabled ? ENABLED : DISABLED); // set status eagerly
+	// this.setStatus(enabled ? ENABLED : DISABLED); // set status eagerly
 	var url = "/set_status.cgi?room="+ this.id+ "&status=" + (enabled ? "1" : "0");
 	fetch(url)
 	.then(function(resp) {

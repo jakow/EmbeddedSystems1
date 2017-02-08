@@ -16,5 +16,6 @@
 		"status": %u,
 		"sched_time": %u
 	}
-]
+],
+"system_time": %u
 }
