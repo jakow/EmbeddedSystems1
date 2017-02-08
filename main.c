@@ -103,6 +103,7 @@ void enable_all_callback(void *room_alarm_ptr);
 
 
 /* initialise webserver paths */
+_mqx_int set_system_time(HTTPD_SESSION_STRUCT *);
 _mqx_int get_timer_status(HTTPD_SESSION_STRUCT *);
 _mqx_int set_enable_time(HTTPD_SESSION_STRUCT *);
 _mqx_int set_status_callback(HTTPD_SESSION_STRUCT *);
@@ -111,6 +112,7 @@ _mqx_int alarm_status_json(HTTPD_SESSION_STRUCT *);
 
 
 static HTTPD_CGI_LINK_STRUCT http_cgi_params[] = {
+	{ "set_system_time", set_system_time },
 	{ "timer_status", get_timer_status },
 	{ "set_enable_time", set_enable_time },
 	{ "set_status", set_status_callback},
@@ -259,20 +261,18 @@ void led_update(uint_32 toggle_state) {
 // 	return session->request.content_len;
 // }
 
-// _mqx_int rtc_set_callback(HTTPD_SESSION_STRUCT *session) {
-// 	unsigned int hours, minutes, seconds;
-// 	RTC_TIME_STRUCT new_time;
-// 	char buffer[BUFFER_LENGTH];
+_mqx_int set_system_time(HTTPD_SESSION_STRUCT *session) {
+	RTC_TIME_STRUCT new_time;
+	char buffer[BUFFER_LENGTH];
 
-// 	sscanf(session->request.urldata, "%02u:%02u:%02u\n", &hours, &minutes, &seconds);
-// 	new_time.seconds = 3600 * hours + 60 * minutes + seconds;
-// 	_rtc_set_time(&new_time);
+	sscanf(session->request.urldata, "%u", &new_time.seconds);
+	_rtc_set_time(&new_time);
 
-// 	snprintf(buffer, BUFFER_LENGTH, "Time set to %02u:%02u:%02u\n", hours, minutes, seconds);
-// 	httpd_sendstr(session->sock, buffer);
-// 	return session->request.content_len;
-// }
-/* EOF */
+	snprintf(buffer, BUFFER_LENGTH, "Time set to %u", new_time.seconds);
+	httpd_sendstr(session->sock, buffer);
+	return session->request.content_len;
+}
+
 _mqx_int get_timer_status(HTTPD_SESSION_STRUCT *session) {
 	int num;
 	char buffer[BUFFER_LENGTH];
@@ -327,11 +327,14 @@ _mqx_int led_status_json(HTTPD_SESSION_STRUCT *session) {
 
 _mqx_int alarm_status_json(HTTPD_SESSION_STRUCT *session) {
 	char buffer[512];
+	RTC_TIME_STRUCT curr_time;
+	_rtc_get_time(&curr_time);
   sprintf(buffer, (const char*) status_json,
           room_alarms[0].status, room_alarms[0].timer_on, room_alarms[0].start_time, room_alarms[0].end_time,
           room_alarms[1].status, room_alarms[1].timer_on, room_alarms[1].start_time, room_alarms[1].end_time,
           room_alarms[2].status, room_alarms[2].timer_on, room_alarms[2].start_time, room_alarms[2].end_time,
-          room_alarms[3].status, room_alarms[3].timer_on, room_alarms[3].start_time, room_alarms[3].end_time);
+          room_alarms[3].status, room_alarms[3].timer_on, room_alarms[3].start_time, room_alarms[3].end_time,
+          curr_time.seconds);
   httpd_sendstr(session->sock, buffer);
   return session->request.content_len;
 }
