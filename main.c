@@ -97,10 +97,6 @@ void enable_all_callback(void *room_alarm_ptr);
 
 /* initialise webserver paths */
 _mqx_int alarm_status_json(HTTPD_SESSION_STRUCT *);
-_mqx_int led_callback(HTTPD_SESSION_STRUCT *);
-_mqx_int led_status_json(HTTPD_SESSION_STRUCT *);
-_mqx_int rtc_get_callback(HTTPD_SESSION_STRUCT *);
-_mqx_int rtc_set_callback(HTTPD_SESSION_STRUCT *);
 void hush_one_callback(HTTPD_SESSION_STRUCT *);
 void set_enable_status_callback(HTTPD_SESSION_STRUCT *)
 
@@ -209,60 +205,66 @@ void enable_all_callback(void *room_alarm_ptr) {
 	// mutex unlock
 }
 
-void led_update(uint_32 toggle_state) {
-	int i;
-	//mutex lock
-	for (i = 0; i < N_ROOMS; ++i) {
-		if (room_alarms[i].triggered) {
-			btnled_set_value(hmi, room_alarms[i].led, toggle_state);
-		}
-		else if(room_alarms[i].enabled) {
-			btnled_set_value(hmi, room_alarms[i].led, HMI_VALUE_ON);
-		}
-		else {
-			btnled_set_value(hmi, room_alarms[i].led, HMI_VALUE_OFF);
-		}
-	}
-	// mutex unlock 
+// void led_update(uint_32 toggle_state) {
+// 	int i;
+// 	//mutex lock
+// 	for (i = 0; i < N_ROOMS; ++i) {
+// 		if (room_alarms[i].triggered) {
+// 			btnled_set_value(hmi, room_alarms[i].led, toggle_state);
+// 		}
+// 		else if(room_alarms[i].enabled) {
+// 			btnled_set_value(hmi, room_alarms[i].led, HMI_VALUE_ON);
+// 		}
+// 		else {
+// 			btnled_set_value(hmi, room_alarms[i].led, HMI_VALUE_OFF);
+// 		}
+// 	}
+// 	// mutex unlock 
 }
 
-_mqx_int led_callback(HTTPD_SESSION_STRUCT *session) {
-	int led = atoi(session->request.urldata);
-	httpd_sendstr(session->sock, "<html><body>LED toggled</body><html>");
-	btnled_toogle(hmi, HMI_GET_LED_ID(led));
-	return session->request.content_len;
-}
+// _mqx_int led_callback(HTTPD_SESSION_STRUCT *session) {
+// 	int led = atoi(session->request.urldata);
+// 	httpd_sendstr(session->sock, "<html><body>LED toggled</body><html>");
+// 	btnled_toogle(hmi, HMI_GET_LED_ID(led));
+// 	return session->request.content_len;
+// }
 
-_mqx_int rtc_get_callback(HTTPD_SESSION_STRUCT *session) {
-	RTC_TIME_STRUCT curr_time;
-	unsigned int hours, minutes, seconds;
-	char buffer[BUFFER_LENGTH];
+// _mqx_int rtc_get_callback(HTTPD_SESSION_STRUCT *session) {
+// 	RTC_TIME_STRUCT curr_time;
+// 	unsigned int hours, minutes, seconds;
+// 	char buffer[BUFFER_LENGTH];
 
-	_rtc_get_time(&curr_time);
-	seconds = curr_time.seconds % 60;
-	minutes = (curr_time.seconds / 60) % 60;
-	hours = curr_time.seconds / 3600;
-	snprintf(buffer, BUFFER_LENGTH, "%02u:%02u:%02u\n", hours, minutes, seconds);
-	httpd_sendstr(session->sock, buffer);
-	return session->request.content_len;
-}
+// 	_rtc_get_time(&curr_time);
+// 	seconds = curr_time.seconds % 60;
+// 	minutes = (curr_time.seconds / 60) % 60;
+// 	hours = curr_time.seconds / 3600;
+// 	snprintf(buffer, BUFFER_LENGTH, "%02u:%02u:%02u\n", hours, minutes, seconds);
+// 	httpd_sendstr(session->sock, buffer);
+// 	return session->request.content_len;
+// }
 
-_mqx_int rtc_set_callback(HTTPD_SESSION_STRUCT *session) {
-	unsigned int hours, minutes, seconds;
-	RTC_TIME_STRUCT new_time;
-	char buffer[BUFFER_LENGTH];
+// _mqx_int rtc_set_callback(HTTPD_SESSION_STRUCT *session) {
+// 	unsigned int hours, minutes, seconds;
+// 	RTC_TIME_STRUCT new_time;
+// 	char buffer[BUFFER_LENGTH];
 
-	sscanf(session->request.urldata, "%02u:%02u:%02u\n", &hours, &minutes, &seconds);
-	new_time.seconds = 3600 * hours + 60 * minutes + seconds;
-	_rtc_set_time(&new_time);
+// 	sscanf(session->request.urldata, "%02u:%02u:%02u\n", &hours, &minutes, &seconds);
+// 	new_time.seconds = 3600 * hours + 60 * minutes + seconds;
+// 	_rtc_set_time(&new_time);
 
-	snprintf(buffer, BUFFER_LENGTH, "Time set to %02u:%02u:%02u\n", hours, minutes, seconds);
-	httpd_sendstr(session->sock, buffer);
-	return session->request.content_len;
-}
+// 	snprintf(buffer, BUFFER_LENGTH, "Time set to %02u:%02u:%02u\n", hours, minutes, seconds);
+// 	httpd_sendstr(session->sock, buffer);
+// 	return session->request.content_len;
+// }
 /* EOF */
 
+_mqx_int hush_one_callback(HTTPD_SESSION_STRUCT *session) {
+	
+}
 
+_mqx_int set_enable_status_callback(HTTPD_SESSION_STRUCT *session) {
+
+}
 _mqx_int led_status_json(HTTPD_SESSION_STRUCT *session) {
 	char buffer[BUFFER_LENGTH];
 	unsigned char i;
@@ -280,5 +282,5 @@ _mqx_int led_status_json(HTTPD_SESSION_STRUCT *session) {
 
 _mqx_int alarm_status_json(HTTPD_SESSION_STRUCT *session) {
 	char buffer[256];
-	
+
 }
