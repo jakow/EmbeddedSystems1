@@ -19,6 +19,7 @@ function AlarmControl(parentEl, id) {
 	this.hushButton = this.parent.querySelectorAll('.hush.button')[0];
 	this.changeScheduleButton = this.parent.querySelectorAll('.change-schedule.button')[0];
 
+	this.notifyChangedListener = null;
 	this.initialiseIncrements();
 	// this.setEnabledState(true);
 	this.enableButton.onclick = function() {
@@ -39,6 +40,8 @@ AlarmControl.prototype.initialiseIncrements = function() {
 
 	});
 }
+
+
 
 
 AlarmControl.prototype.setStatus = function(status) {
@@ -66,16 +69,18 @@ AlarmControl.prototype.setStatus = function(status) {
 	}
 	this.status = status;
 	this.enableButton.checked = status >= ENABLED;
-	var classesToRemove = STATUS_STRINGS.filter(function(elem) {elem != statusName});
-	this.statusEl.classList.remove.apply(this.statusEl.classList, classesToRemove);
+	STATUS_STRINGS.forEach(function(str) {
+		this.statusEl.classList.remove(str);
+	}.bind(this));
 	this.statusEl.classList.add(statusName);
 	this.statusEl.innerHTML = statusString;
+	if (this.notifyChangedListener != null) this.notifyChangedListener();
 }
 
 
 
 AlarmControl.prototype.pushStatus = function(enabled) {
-	this.setStatus(enabled); // set status eagerly
+	this.setStatus(enabled ? ENABLED : DISABLED); // set status eagerly
 	var url = "/set_status.cgi?room="+ this.id+ "&status=" + (enabled ? "1" : "0");
 	fetch(url)
 	.then(function(resp) {
@@ -88,26 +93,21 @@ AlarmControl.prototype.pushStatus = function(enabled) {
 		this.setStatus(ERROR);
 	}.bind(this));
 }
-AlarmControl.prototype.updateStatus = function(status) {
-	if (status == TRIGGERED)
-	this.setEnabledState(enabled);
-};
 
 function updateTime(time) {
 	systemTimeEl.innerHTML = time.toString();
 }
 
-
 function updateStatus(alarms, statusArr) {
-	console.log(alarms, statusArr);
+
 	alarms.forEach(function(item, idx) {
 		item.setStatus(statusArr[idx].status);
 		// item.setScheduledTime(statusArr[idx].sched_time);
 	});
 	if (alarms.some(function(alarm) {return alarm.status == TRIGGERED}))
-		body.classList.add('alarm');
+		document.body.classList.add('alarm');
 	else
-		body.classList.remove('alarm');
+		document.body.classList.remove('alarm');
 }
 
 function fetchStatus(alarms) {
@@ -119,7 +119,9 @@ function fetchStatus(alarms) {
 		updateStatus(alarms, json.alarms);
 	})
 	.catch(function(err) {
-		console.log(err);
+		alarms.forEach(function(alarm) {
+			alarm.setStatus(ERROR);
+		})
 	});
 }
 
@@ -129,6 +131,10 @@ function init() {
 	var alarms = elems.map(function(elem, id) {return new AlarmControl(elem, id) });
 	var systemTimeEl = document.getElementById('system-time-module--time-container');
 	fetchStatus(alarms);
+	var interval = setInterval(function () {
+		fetchStatus(alarms)
+	}, 500)
+
 }
 
 init();
