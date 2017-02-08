@@ -212,19 +212,21 @@ void enable_all_callback(void *room_alarm_ptr) {
 }
 
 void led_update(uint_32 toggle_state) {
-	int i;
+	int i, value;
 	//mutex lock
 	for (i = 0; i < N_ROOMS; ++i) {
-		switch(room_alarms[i].status)
-		if (room_alarms[i].status == TRIGGERED) {
-			btnled_set_value(hmi, room_alarms[i].led, toggle_state);
+		switch(room_alarms[i].status) {
+			case TRIGGERED: 
+				value = toggle_state;
+				break;
+			case ENABLED:
+				value = HMI_VALUE_ON;
+				break;
+			case DISABLED:
+				value = HMI_VALUE_OFF;
+				break;
 		}
-		else if(room_alarms[i].status == ENABLED) {
-			btnled_set_value(hmi, room_alarms[i].led, HMI_VALUE_ON);
-		}
-		else {
-			btnled_set_value(hmi, room_alarms[i].led, HMI_VALUE_OFF);
-		}
+		btnled_set_value(hmi, room_alarms[i].led, value);
 	}
 	// mutex unlock
 }

@@ -1,4 +1,5 @@
-var CHECKING = -1;
+var CHECKING = -2;
+var ERROR = -1;
 var DISABLED = 0;
 var ENABLED = 1;
 var TRIGGERED = 2;
@@ -41,29 +42,50 @@ AlarmControl.prototype.initialiseIncrements = function() {
 
 
 AlarmControl.prototype.setStatus = function(status) {
-	if (state == 0) {
-		return;
+	var STATUS_STRINGS = ['error', 'enabled', 'disabled', 'alarm'];
+	var statusString;
+	var statusName;
+	switch (status) {
+		case ERROR:
+			statusString = 'ERROR'
+			statusName = 'error'
+		case ENABLED:
+			statusString = 'Enabled';
+			statusName = 'enabled';
+			break;
+		case DISABLED:
+			statusString = 'Disabled';
+			statusName = 'disabled';
+			break;
+		case TRIGGERED:
+			statusString = 'ALARM!';
+			statusName = 'alarm';
+			break;
+		default:
+			return // invalid state
 	}
-	if (enabled) {
-		this.status = 'enabled';
-		this.statusEl.classList.remove('disabled');
-		this.statusEl.classList.add('enabled');
-		this.statusEl.innerHTML = 'Enabled';
-	}
+	this.status = status;
+	this.enableButton.checked = status >= ENABLED;
+	var classesToRemove = STATUS_STRINGS.filter(function(elem) {elem != statusName});
+	this.statusEl.classList.remove.apply(this.statusEl.classList, classesToRemove);
+	this.statusEl.classList.add(statusName);
+	this.statusEl.innerHTML = statusString;
 }
 
 
+
 AlarmControl.prototype.pushStatus = function(enabled) {
-	var oldStatus = this.status;
 	this.setStatus(enabled); // set status eagerly
 	var url = "/set_status.cgi?room="+ this.id+ "&status=" + (enabled ? "1" : "0");
 	fetch(url)
 	.then(function(resp) {
-		if (resp.status >= 400)
-			this.setStatus(oldStatus); // if failed roll back
+		if (resp.status < 400)
+			this.setStatus(enabled);	
+		else
+			this.setStatus(ERROR); // if failed roll back
 	}.bind(this))
 	.catch(function(err) {
-		this.setStatus(oldStatus);
+		this.setStatus(ERROR);
 	}.bind(this));
 }
 AlarmControl.prototype.updateStatus = function(status) {
@@ -77,13 +99,18 @@ function updateTime(time) {
 
 
 function updateStatus(alarms, statusArr) {
+	console.log(alarms, statusArr);
 	alarms.forEach(function(item, idx) {
 		item.setStatus(statusArr[idx].status);
 		// item.setScheduledTime(statusArr[idx].sched_time);
 	});
+	if (alarms.some(function(alarm) {return alarm.status == TRIGGERED}))
+		body.classList.add('alarm');
+	else
+		body.classList.remove('alarm');
 }
 
-function fetchStatus() {
+function fetchStatus(alarms) {
 	/* fetch system status */
 	fetch("/alarm_status.cgi").then(function(response) {
 		return response.json();
@@ -99,10 +126,9 @@ function fetchStatus() {
 
 function init() {
 	var elems = Array.prototype.slice.call(document.querySelectorAll('.room'));
-	var alarms = elems.map(function(elem, id) {new AlarmControl(elem, id) });
+	var alarms = elems.map(function(elem, id) {return new AlarmControl(elem, id) });
 	var systemTimeEl = document.getElementById('system-time-module--time-container');
-
-	fetchStatus();
+	fetchStatus(alarms);
 }
 
 init();
