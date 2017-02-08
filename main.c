@@ -213,7 +213,6 @@ void enable_all_callback(void *room_alarm_ptr) {
 	int i;
 	// mutex lock
 	for (i = 0; i < N_ROOMS; ++i) { //enable all alarms
-		if(room_alarms[i].status != TRIGGERED) 
 			room_alarms[i].status = ENABLED;
 	}
 	// mutex unlock
