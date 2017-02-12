@@ -1,27 +1,30 @@
 /*@import url('https://fonts.googleapis.com/css?family=Raleway');*/
 @import url('https://fonts.googleapis.com/css?family=Cabin');
 @import url('https://fonts.googleapis.com/css?family=Fira+Mono');
+@import url('https://fonts.googleapis.com/css?family=Source+Sans+Pro');
 
 
 html, body {
-	height: 100%;
+	min-height: 100vh;
 }
 
 body {
 	background: #323a4c;
-	font-family: 'Cabin', sans-serif;
+	font-family: 'Source Sans Pro', sans-serif;
 
 	line-height: 1.4;
 	display: flex;
+	/*width*/
 	flex-direction: column;
 	justify-content: center;
+	align-items: center;
 	transition: background 0.2s ease-out;
 }
 
 body.alarm {
 	transition: background 0.2s ease-out;
 	background: #EF5350;
-	animation: alarm 0.4s ease-in infinite alternate;
+	animation: alarm 0.4s cubic-bezier(0.4, 0.0, 0.2, 1) infinite alternate;
 }
 
 @keyframes alarm {
@@ -35,8 +38,10 @@ p {
 }
 /* layout */
 .main-container {
+	display: inline-block;
 	margin: 3rem auto;
 	flex: 0 1 auto;
+	/*width: 100%;*/
 }
 
 /* looks */
@@ -48,7 +53,7 @@ p {
 
 .top-bar {
 	padding: 1rem 30px;
-	border-bottom: 1px solid #eee;
+	border-bottom: 1px solid #ccc;
 	display: flex;
 	flex-direction: row;
 	align-items: center;
@@ -74,12 +79,24 @@ p {
 
 .grid-row {
 	display: flex;
-	flex-wrap: nowrap;
+	flex-wrap: wrap;
 	flex-direction: row;
 }
 
 .grid-cell {
-	flex: 1 1 auto;
+	flex: 0 1 300px;
+	box-sizing: border-box;
+}
+
+
+
+@media screen and (min-width: 980px) {
+	.grid-cell {
+		flex: 0 1 auto;
+	}
+	.room+.room{
+	border-left: 1px solid #ccc;
+	}
 }
 
 .grid--top {
@@ -105,14 +122,15 @@ p {
 .room {
 	text-align: center;
 	padding: 1.5rem;
-	border-bottom: 1px solid #eee;
+	border-bottom: 1px solid #ccc;
 }
 
 .room--name {
 	margin-bottom: 12px;
 }
+
 .room:not(:last-child) {
-	border-right: 1px solid #eee;
+	
 	
 }
 
@@ -124,7 +142,7 @@ p {
 	font-size: 2.5rem;
 	
 	margin-bottom: 1rem;
-	transition: all 0.22s ease-in 0s;
+	transition: all 0.1s cubic-bezier(0.4, 0.0, 0.2, 1) 0s;
 }
 
 .room--status.enabled {
@@ -137,15 +155,18 @@ p {
 .room--status.alarm {
 	color: #EF5350;
 }
+.room--status.error {
+	color: #EF5350;
+}
 
 
 .room--alarm-scheduler {
-	padding: 1rem ;
+	padding-top: 1rem;
 	border-top: 1px solid #eee;
 }
 .room--alarm-scheduler .scheduled-time {
 	font-family: 'Fira Mono';
-	font-size 1.5rem;
+	/*font-size: 1.5rem;*/
 	margin-right: 1rem;
 }
 
@@ -177,7 +198,7 @@ p {
 .onoffswitch-inner {
     display: inline-block; 
     /*width: 200%; */
-    transition: all 0.22s ease-in 0s;
+    transition: all 0.1s cubic-bezier(0.4, 0.0, 0.2, 1) 0s;
 
 }
 .onoffswitch-inner:before, .onoffswitch-inner:after {
@@ -217,10 +238,10 @@ p {
     position: absolute; top: 0; bottom: 0;
     transform: initial;
     
-    transition: all 0.22s ease-in 0s; 
+    transition: all 0.15s cubic-bezier(0.4, 0.0, 0.2, 1) 0s; 
 }
 .onoffswitch-checkbox + .onoffswitch-label {
-	transition: all 0.22s cubic-bezier(0.4, 0.0, 0.2, 1) 0s; 
+	transition: all 0.15s cubic-bezier(0.4, 0.0, 0.2, 1) 0s; 
 	/*border: 2px solid #EF5350;*/
 	border: 1px solid #ccc;
 }
@@ -239,12 +260,12 @@ p {
 	font-size: 2rem;
 }
 
+.system-time-module > div+div {
+	margin-left: 1rem;
+}
+
 .system-time-module .button {
 	margin-bottom: 0;
-}
-#system-time-module--time-container {
-	font-family: 'Fira Mono';
-	margin: 0 1rem;
 }
 
 button.button {
@@ -258,12 +279,15 @@ button.button[disabled], button.button:disabled {
 	border-color: #ddd;
 }
 
+.room--alarm-scheduler .separator {
+	display: inline-block;
+	margin: 0 4px;
+}
 
-
-.room--time-schedule .incs > a, .room--time-schedule .decs > a {
+.timer-component .incs > a {
 	background: #eee;
-	width: 16px;
-	height: 16px;
+	width: 1em;
+	height: 1em;
 	border: 1px solid #bbb;
 	border-radius: 2px;
 	line-height: 100%;
@@ -271,50 +295,72 @@ button.button[disabled], button.button:disabled {
 	margin-top: 2px;
 	margin-bottom: 2px;
 	text-decoration: none;
-	transition: opacity 0.1s ease-in;
+	text-align: center;
+	transition: opacity 0.1s cubic-bezier(0.4, 0.0, 0.2, 1);
 
 }
 
-.room--time-schedule {
-	display: inline-flex;
+.timer-component-parent {
+	display: flex;
 	flex-direction: row;
 	align-items: center;
+	justify-content: center;
+}
+.timer-compontent-parent  .change-schedule {
+	margin-bottom: 0;
+	margin-left: 1rem;
 }
 
-.room--time-schedule > div+div {
-	margin-left: 2rem;
+
+.change-schedule {
+	width: 38px;
+	height: 38px;
+	padding: 0;
+	margin-bottom: 0;
+	margin-left: 1em;
+	transition: all 0.1s cubic-bezier(0.4, 0.0, 0.2, 1);
+	
+}
+#set-system-time {
+	margin-left: 1em;
 }
 
-.room--time-schedule .change-schedule {
-	width: 112px;
-
-}
-
-.room--time-schedule .change-schedule.set {
+.change-schedule.set, #set-system-time.set {
 	background: #32D187;
+	color: white;
 }
-.room--time-schedule .time {
+.timer-component .time {
 	font-family: 'Fira Mono';
 }
-
-.room--time-schedule .incs > a+a, .room--time-schedule .decs > a+a {
-	margin-left: 5px;
+.timer-component .incs {
+	transition: opacity 0.1s cubic-bezier(0.4, 0.0, 0.2, 1) 0, visibility 0s cubic-bezier(0.4, 0.0, 0.2, 1) 0.1s;
+	visibility: hidden;
+	opacity: 0;
+}
+.timer-component .incs.show {
+	opacity: 1;
+	visibility: visible;
+	transition: opacity 0.1s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+.timer-component .incs > a+a {
+	margin-left: 0.5em;
 }
 
-.room--time-schedule .incs > *::before, .room--time-schedule .decs > *::before {
+.timer-component .incs > *::before {
+	font-family: 'sans-serif';
 	color: #555;
-	line-height: 16px;
-	font-size: 10px;
+	line-height: 1em;
+	font-size: 0.7em;
+	text-align: center;
+	display: inline-block;
 }
-.room--time-schedule .incs > *::before {
-	
+.timer-component .incs.up > *::before {
 	content: '\25B2';
-
 }
 
-.room--time-schedule .decs > *::before {
+.timer-component .incs.down > *::before {
+	/*margin-top: 0.1em;*/
 	content: '\25BC';
-
 }
 
 

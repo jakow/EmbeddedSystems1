@@ -51,16 +51,9 @@ TASK_TEMPLATE_STRUCT MQX_template_list[] =
    {MAIN_TASK,   Main_task,   2000,  9,   "main", MQX_AUTO_START_TASK, 50},
    {BUTTON_TASK, Button_task, 2000, 9, "button", 0, 50},
    {FLASH_TASK,  Flash_task, 2000, 9, "flash",   0, 50},
-   {0,           0,           0,     0,   0,      0, 50}
+   {0,           0,           0,     0,   0,      0, 0}
 };
 
-/*TASK*-----------------------------------------------------------------
- * *
- * * Function Name  : Main_task
- * * Comments       :
- * *    This task initializes MFS and starts SHELL.
- * *
- * *END------------------------------------------------------------------*/
 
 static HTTPD_ROOT_DIR_STRUCT http_root_dir[] = {
 	{ "", "tfs:"}, { 0,0 } };
