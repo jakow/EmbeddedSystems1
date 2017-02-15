@@ -1,9 +1,9 @@
-var CHECKING = -2;
-var ERROR = -1;
-var DISABLED = 0;
-var ENABLED = 1;
-var TRIGGERED = 2;
-
+const CHECKING = -2;
+const ERROR = -1;
+const DISABLED = 0;
+const ENABLED = 1;
+const TRIGGERED = 2;
+const SECONDS_PER_DAY = 24* 60 * 60;
 /* HELPER FUNCTINONS */
 function arrayQuerySelector(domNode, selector) { return Array.prototype.slice.call(domNode.querySelectorAll(selector)); }
 
@@ -18,7 +18,7 @@ function timeString(time) {
 	return hrStr + ":" + minStr + ":" + secStr;
 }
 
-/* Alarm Control Component */
+/* CLASS DEFINITIONS */
 function AlarmControlComponent(parentEl, id) {
 	// get component elements
 	this.id = id;
@@ -40,28 +40,22 @@ function AlarmControlComponent(parentEl, id) {
 }
 
 AlarmControlComponent.prototype.initialiseClickEvents = function() {
-	this.enableButton.onclick = function () {
-		this.pushStatus(this.enableButton.checked);
-	}.bind(this); //need to bind the method to the AlarmControlComponent instance
+	this.enableButton.onclick = () => this.pushStatus(this.enableButton.checked);
+//need to bind the method to the AlarmControlComponent instance
 
-	this.hushButton.onclick = function () {
-		// hush button only active when the alarm is triggered
-		this.pushStatus(ENABLED);
-	}.bind(this);
+	this.hushButton.onclick = () => this.pushStatus(ENABLED);
 
-	this.changeScheduleButton.onclick = function () {
+	this.changeScheduleButton.onclick = ()  => {
 		this.changingScheduleFlag = !this.changingScheduleFlag;
 		this.changeScheduleButton.classList.toggle('set');
-		if (this.changingScheduleFlag) {
-			this.timerStart.setButtonsVisibilityState(true);
-			this.timerEnd.setButtonsVisibilityState(true);
-		} else {
-			this.timerStart.setButtonsVisibilityState(false);
-			this.timerEnd.setButtonsVisibilityState(false);
+		this.timerStart.setButtonsVisibilityState(this.changingScheduleFlag);
+		this.timerEnd.setButtonsVisibilityState(this.changeScheduleButton);
+		if (!this.changingScheduleFlag) { // done changing
 			this.pushScheduledTime(this.timerStart.getTime(), this.timerEnd.getTime());
 		}
-	}.bind(this);
+	};
 };
+
 
 AlarmControlComponent.prototype.setStatus = function(status) {
 	var STATUS_STRINGS = ['error', 'enabled', 'disabled', 'alarm'];
@@ -93,8 +87,6 @@ AlarmControlComponent.prototype.setStatus = function(status) {
 	this.statusEl.classList.add(statusName);
 	this.statusEl.innerHTML = statusString;
 	this.hushButton.disabled = status != TRIGGERED;
-	if (this.notifyChangedListener != null) this.notifyChangedListener();
-
 };
 
 AlarmControlComponent.prototype.pushStatus = function(enabled) {
@@ -103,39 +95,37 @@ AlarmControlComponent.prototype.pushStatus = function(enabled) {
 	// this.setStatus(enabled ? ENABLED : DISABLED); // set status eagerly
 	var url = "/set_status.cgi?room="+ this.id+ "&status=" + (enabled ? "1" : "0");
 	fetch(url)
-	.then(function(response) {
+	.then(response => {
 		if (response.ok)
 			// do some error validation as well?
 			this.setStatus(enabled);	
 		else
 			this.setStatus(ERROR);
 		this.changingStateFlag = false;
-	}.bind(this))
-	.catch(function(err) {
+	})
+	.catch(err => {
 		this.setStatus(ERROR);
 		this.changingStateFlag = false;
-	}.bind(this));
+	});
 
 }
 
 AlarmControlComponent.prototype.pushScheduledTime = function (start, end) {
 	var url = 'set_enable_time.cgi?room='+ this.id + "&start=" + start + "&end=" + end;
-	console.log(url);
-	fetch(url)
-	.then(function(response) {
-		if (!response.ok) {
-			this.setStatus(ERROR);
-			this.timerStart.clearTime();
-			this.timerEnd.clearTime();
-			alert('Failed to schedule the alarm.');
-		}
-	}.bind(this))
-	.catch(function(err) {
+	var handleEror = () => {
 		this.setStatus(ERROR);
 		this.timerStart.clearTime();
 		this.timerEnd.clearTime();
 		alert('Failed to schedule the alarm.');
-	}.bind(this));
+	}
+	console.log(url);
+	fetch(url)
+	.then(response => {
+		if (!response.ok) {
+			handleEror();
+		}
+	})
+	.catch(handleEror);
 };
 
 /* 	Timer component 
@@ -147,54 +137,41 @@ function TimerComponent(parentEl, initTimeSecs) {
 
 	this.timeEl = parentEl.querySelectorAll('time')[0];
 	this.incElems = arrayQuerySelector(parentEl, '.incs');
-	
 	this.displayTime = initTimeSecs || 0;
-	this.currentTime = this.displayTime;
-	// this.setTime(this.displayTime);
 
 
 	var increments = [3600, 60, 1, -3600, -60, -1];
-	var incrementFunction = function(incVal) {
-		return function(event) {
-			this.increment(incVal);
-		}.bind(this);
-	}.bind(this);
-	this.incButtons = arrayQuerySelector(parentEl, '.incs a').map(function (button, idx) {
-		return new IncrementButton(button, 
-			incrementFunction(increments[idx]));
-	});
-	this.setButtonsVisibilityState(false);
+	var incrementFunction = (incVal) => () => this.increment(incVal);
 
+	this.incButtons = arrayQuerySelector(parentEl, '.incs a')
+	.map( (button, idx) => 
+		new IncrementButton(button, incrementFunction(increments[idx])));
+	this.setButtonsVisibilityState(false);
 }
 
 TimerComponent.prototype.setButtonsVisibilityState = function(visible) {
-	if (visible) {
-		this.incElems.forEach(function(elem) {
-			elem.classList.add('show');
-		})
-	}	
-	else {
-		this.incElems.forEach(function(elem) {
-			elem.classList.remove('show');
-		})
-	}
+	if (visible)
+		this.incElems.forEach(elem => elem.classList.add('show'));
+	else
+		this.incElems.forEach(elem => elem.classList.remove('show'));
 };
 
 TimerComponent.prototype.getTime = function () { return this.displayTime; }
 
-TimerComponent.prototype.clearTime = function(first_argument) { this.timeEl.innerHTML = '__:__:__';
+TimerComponent.prototype.clearTime = function() { this.timeEl.innerHTML = '__:__:__';
 };
 
 TimerComponent.prototype.timeString = function() { return(timeString(this.displayTime)); }
 
 TimerComponent.prototype.increment = function (number) {
-	if (this.displayTime + number < 0)
-		return; // noop if 
-	this.setTime(this.displayTime += number);
+	var time = this.displayTime + number;
+	while (time < 0) // wrap back to positive;
+		time += SECONDS_PER_DAY; 
+	this.setTime( time % SECONDS_PER_DAY);
 }
 
 TimerComponent.prototype.setTime = function (time) {
-	this.displayTime = time;
+	this.displayTime = time; // should always be less than SECONDS_PER_DAY
 	this.timeEl.innerHTML = timeString(time);
 }
 
@@ -233,9 +210,6 @@ IncrementButton.prototype.startIncrement = function (event) {
 
 IncrementButton.prototype.increment = function () {
 	if (!this.doIncrement) return;
-	// console.log('increment with count=' + this.count + 
-	// 	', interval=' + this.interval +
-	// 	', threshold=' + this.threshold);
 	this.incFun();
 	this.count++;
 	this.timeout = setTimeout(this.increment.bind(this), this.interval);
@@ -256,10 +230,14 @@ IncrementButton.prototype.stopIncrement = function (event) {
 	this.count = 0;
 
 }
+/* Class definition end *
 
+/* Helper functions */
+
+//
 function updateAlarmStatus(alarms, statusArr) {
 	var status;
-	alarms.forEach(function(alarm, idx) {
+	alarms.forEach((alarm, idx) => {
 		status = statusArr[idx];
 		if (!alarm.changingStateFlag) // pushStatus has priority
 			alarm.setStatus(status.status);
@@ -268,13 +246,13 @@ function updateAlarmStatus(alarms, statusArr) {
 			alarm.timerEnd.setTime(status.end_time)
 		}
 	});
-	if (alarms.some(function(alarm) {return alarm.status == TRIGGERED}))
+	if (alarms.some(alarm => alarm.status == TRIGGERED))
 		document.body.classList.add('alarm');
 	else
 		document.body.classList.remove('alarm');
 }
 
-
+// fetch system status - alarm status
 function fetchStatus(alarms, systemTimer) {
 	/* fetch system status */
 	fetch("/alarm_status.cgi")
@@ -295,6 +273,7 @@ function fetchStatus(alarms, systemTimer) {
 	});
 }
 
+// push system time to server
 function setSystemTime(time) {
 	fetch('set_system_time.cgi?'+time)
 	.catch(function(err) {
@@ -304,6 +283,18 @@ function setSystemTime(time) {
 	});
 }
 
+//helper for hush all, enable all, and disable all
+function pushStatusChangeAll(alarms, status, url) {
+		alarms.forEach((alarm) => {
+			alarm.setStatus(status);
+			alarm.changingStateFlag = true;
+		})
+		fetch(url).then(() => {
+			alarms.forEach(alarm => alarm.changingStateFlag = false
+		)
+	})
+}
+
 // startup code
 var systemTimeUpdateFlag = false;
 var systemTimer = new TimerComponent(document.getElementById('system-timer'));
@@ -311,15 +302,26 @@ var setSystemTimeButton = document.getElementById('set-system-time');
 var enableAllButton = document.getElementById('enable-all-button');
 var disableAllButton = document.getElementById('disable-all-button');
 var hushAllButton = document.getElementById('hush-all-button');
-
-enableAllButton.onclick = function() { fetch('enable_all.cgi') }
-disableAllButton.onclick = function() { fetch('disable_all.cgi') }
-hushAllButton.onclick = function() { fetch('hush_all.cgi') }
-
 var alarms = arrayQuerySelector(document, '.room')
 	.map(function(elem, id) {
 		return new AlarmControlComponent(elem, id) 
 	});
+
+
+// initialise some click handlers
+enableAllButton.onclick = function() {
+ pushStatusChangeAll(alarms, ENABLED, 'enable_all.cgi')
+};
+disableAllButton.onclick = function() { 
+pushStatusChangeAll(alarms, DISABLED, 'disable_all.cgi');
+};
+
+hushAllButton.onclick = function() {
+	pushStatusChangeAll(
+		alarms.filter(alarm => alarm.status == TRIGGERED), 
+		ENABLED, 
+		'hush_all.cgi')
+};
 
 setSystemTimeButton.onclick = function () {
 	systemTimeUpdateFlag = !systemTimeUpdateFlag;
@@ -331,12 +333,9 @@ setSystemTimeButton.onclick = function () {
 		systemTimer.setButtonsVisibilityState(false);
 		setSystemTime(systemTimer.getTime());
 	}
-}
-
+};
 
 
 fetchStatus(alarms, systemTimer);
-var interval = setInterval(function () {
-	fetchStatus(alarms, systemTimer);
-}, 1000)
+var interval = setInterval(() => fetchStatus(alarms, systemTimer), 1000)
 
