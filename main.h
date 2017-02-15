@@ -19,6 +19,7 @@
 #define MAIN_TASK 	1
 #define BUTTON_TASK	2
 #define FLASH_TASK	3
+#define SCHED_TASK 4
 
 #define ENET_DEVICE 0
 #define RTCS_DHCP 0
@@ -33,6 +34,7 @@
 extern void Main_task (uint_32);
 extern void Flash_task (uint_32);
 extern void Button_task (uint_32);
+extern void Sched_task (uint_32);
 
 
 void rtcs_init(void);

@@ -51,6 +51,7 @@ TASK_TEMPLATE_STRUCT MQX_template_list[] =
    {MAIN_TASK,   Main_task,   2000,  9,   "main", MQX_AUTO_START_TASK, 50},
    {BUTTON_TASK, Button_task, 2000, 9, "button", 0, 50},
    {FLASH_TASK,  Flash_task, 2000, 9, "flash",   0, 50},
+   {SCHED_TASK, Sched_task, 2000, 9, "scheduler", 0, 50},
    {0,           0,           0,     0,   0,      0, 0}
 };
 
@@ -102,11 +103,16 @@ _mqx_int set_enable_time(HTTPD_SESSION_STRUCT *);
 _mqx_int set_status_callback(HTTPD_SESSION_STRUCT *);
 _mqx_int led_status_json(HTTPD_SESSION_STRUCT *);
 _mqx_int alarm_status_json(HTTPD_SESSION_STRUCT *);
+_mqx_int enable_all(HTTPD_SESSION_STRUCT *);
+_mqx_int hush_all(HTTPD_SESSION_STRUCT *);
+
 
 
 static HTTPD_CGI_LINK_STRUCT http_cgi_params[] = {
 	{ "set_system_time", set_system_time },
 	{ "timer_status", get_timer_status },
+	{ "enable_all", enable_all },
+	{ "hush_all", hush_all },
 	{ "set_enable_time", set_enable_time },
 	{ "set_status", set_status_callback},
 	{ "led_status", led_status_json },
@@ -136,6 +142,7 @@ void Main_task(uint_32 initial_data) {
 	// run slave tasks
 	_task_create(0, FLASH_TASK, 0); //(processor, task name, parameter)
 	_task_create(0, BUTTON_TASK, 0);
+	_task_create(0, SCHED_TASK, 0);
 	// run server
 	httpd_server_run(http_server);
 	while (TRUE) {
@@ -165,6 +172,23 @@ void Flash_task(uint_32 initial_data) {
 	}
 }
 
+void Sched_task(uint_32 initial_data) {
+	RTC_TIME_STRUCT curr_time;
+	int i;
+	while (TRUE) {
+		_rtc_get_time(&curr_time);
+		for (i = 0; i < N_ROOMS; i++) {
+			if (room_alarms[i].timer_on && room_alarms[i].start_time == curr_time.seconds) {
+				room_alarms[i].status = ENABLED;
+			}
+			if (room_alarms[i].timer_on && room_alarms[i].end_time == curr_time.seconds) {
+				room_alarms[i].status = DISABLED;
+			}
+		}
+		_time_delay(1000);
+	}
+}
+
 void init_room_alarms() {
 	int i; //iterator
 	// set values of buttons and leds
@@ -189,13 +213,13 @@ void init_pushbuttons() {
 }
 
 
-void trigger_alarm_callback(void *room_alarm_ptr) {
+void trigger_alarm_callback(void* room_alarm_ptr) {
 	room_alarm* r = (room_alarm*) room_alarm_ptr; // cast to room_alarm
 	if (r->status == ENABLED) 
 		r->status = TRIGGERED; // flash if triggered
 }
 
-void disable_all_callback(void *room_alarm_ptr) {
+void disable_all_callback(void* dummy) {
 	int i;
 	// mutex lock
 	for (i = 0; i < N_ROOMS; ++i) {
@@ -204,7 +228,7 @@ void disable_all_callback(void *room_alarm_ptr) {
 	//mutex unlock
 }
 
-void enable_all_callback(void *room_alarm_ptr) {
+void enable_all_callback(void* dummy) {
 	int i;
 	// mutex lock
 	for (i = 0; i < N_ROOMS; ++i) { //enable all alarms
@@ -277,6 +301,27 @@ _mqx_int get_timer_status(HTTPD_SESSION_STRUCT *session) {
 	return session->request.content_len;
 }
 
+_mqx_int enable_all(HTTPD_SESSION_STRUCT *session) {
+	char buffer[BUFFER_LENGTH];
+
+	enable_all_callback(NULL);
+	sprintf(buffer, "All alarms enabled");	
+	httpd_sendstr(session->sock, buffer);
+	return session->request.content_len;
+}
+
+_mqx_int hush_all(HTTPD_SESSION_STRUCT *session) {
+	char buffer[BUFFER_LENGTH];
+	int i;
+	for (i = 0; i < N_ROOMS; i++) {
+		if (room_alarms[i].status == TRIGGERED) {
+			room_alarms[i].status = ENABLED;
+		}
+	}
+	sprintf(buffer, "All alarms hushed");	
+	httpd_sendstr(session->sock, buffer);
+	return session->request.content_len;
+}
 
 _mqx_int set_enable_time(HTTPD_SESSION_STRUCT *session) {
 	unsigned int num = 0;
