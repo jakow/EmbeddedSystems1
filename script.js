@@ -99,14 +99,16 @@ AlarmControlComponent.prototype.setStatus = function(status) {
 
 AlarmControlComponent.prototype.pushStatus = function(enabled) {
 	this.pushingStateFlag = true;
+	this.setStatus(enabled); // set status eagerly for fast UI
 	// this.setStatus(enabled ? ENABLED : DISABLED); // set status eagerly
 	var url = "/set_status.cgi?room="+ this.id+ "&status=" + (enabled ? "1" : "0");
 	fetch(url)
-	.then(function(resp) {
-		if (resp.status < 400)
+	.then(function(response) {
+		if (response.ok)
+			// do some error validation as well?
 			this.setStatus(enabled);	
 		else
-			this.setStatus(ERROR); // if failed roll back
+			this.setStatus(ERROR);
 		this.pushingStateFlag = false;
 	}.bind(this))
 	.catch(function(err) {
@@ -254,9 +256,9 @@ IncrementButton.prototype.stopIncrement = function (event) {
 }
 
 function updateAlarmStatus(alarms, statusArr) {
-	alarms.forEach(function(item, idx) {
-		if (!item.pushingStateFlag) // pushStatus has priority
-			item.setStatus(statusArr[idx].status);
+	alarms.forEach(function(alarm, idx) {
+		if (!alarm.pushingStateFlag) // pushStatus has priority
+			alarm.setStatus(statusArr[idx].status);
 		// item.setScheduledTime(statusArr[idx].sched_time);
 	});
 	if (alarms.some(function(alarm) {return alarm.status == TRIGGERED}))
@@ -268,11 +270,14 @@ function updateAlarmStatus(alarms, statusArr) {
 
 function fetchStatus(alarms, systemTimer) {
 	/* fetch system status */
-	fetch("/alarm_status.cgi").then(function(response) {
+	fetch("/alarm_status.cgi")
+	.then(function(response) {
 		return response.json();
 	})
 	.then(function(json) {
 		if (!systemTimeUpdateFlag)
+			// do not change system time if the user
+			// is trying to change it
 			systemTimer.setTime(json.system_time);
 		updateAlarmStatus(alarms, json.alarms);
 	})
@@ -285,14 +290,10 @@ function fetchStatus(alarms, systemTimer) {
 
 function setSystemTime(time) {
 	fetch('set_system_time.cgi?'+time)
-	.then(function(response) {
-		if (!response.ok) {
-			alert('Failed to set system time.');
-		}
-	})
 	.catch(function(err) {
 		// do nothing? or
 		alert('Failed to set system time.');
+		systemTimer.clearTime();
 	});
 }
 
