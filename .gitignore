@@ -6,3 +6,5 @@ rtcs_init.o
 rtcs_init.d
 node_modules
 
+.__afs*
+*.sublime-workspace
