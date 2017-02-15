@@ -174,18 +174,47 @@ void Flash_task(uint_32 initial_data) {
 }
 
 void Sched_task(uint_32 initial_data) {
-	RTC_TIME_STRUCT curr_time;
+	RTC_TIME_STRUCT time_struct;
 	int i;
+	unsigned int curr_time, start, end;
 	while (TRUE) {
-		_rtc_get_time(&curr_time);
-		curr_time.seconds = curr_time.seconds % SECONDS_PER_DAY;
+
+		_rtc_get_time(&time_struct);
+		curr_time = time_struct.seconds;
+		if (curr_time >= SECONDS_PER_DAY) {
+			// wrap the clock around
+			curr_time = curr_time % SECONDS_PER_DAY;
+			time_struct.seconds = curr_time;
+			_rtc_set_time(&time_struct);
+		}
+
 		for (i = 0; i < N_ROOMS; i++) {
-			if (room_alarms[i].timer_on && room_alarms[i].start_time >= curr_time.seconds) {
-				room_alarms[i].status = ENABLED;
+			// if (room_alarms[i].timer_on && room_alarms[i].start_time >= curr_time.seconds) {
+			// 	room_alarms[i].status = ENABLED;
+			// }
+			// if (room_alarms[i].timer_on && room_alarms[i].end_time >= curr_time.seconds) {
+			// 	room_alarms[i].status = DISABLED;
+			// }
+			if (room_alarms[i].status == TRIGGERED)
+				continue;
+
+			start = room_alarms[i].start_time;
+			end = room_alarms[i].end_time;
+			if (start > end) {
+				// the clock must wrap
+				if (curr_time >= start || curr_time < end) 
+					room_alarms[i].status = ENABLED;
+				else 
+					room_alarms[i].status = DISABLED;
 			}
-			if (room_alarms[i].timer_on && room_alarms[i].end_time >= curr_time.seconds) {
-				room_alarms[i].status = DISABLED;
+			else if (start < end) {
+				if (curr_time >= start && curr_time < end)
+					room_alarms[i].status = ENABLED;
+				else
+					room_alarms[i].status = DISABLED;
 			}
+			// if equal, do nothing
+
 		}
 		_time_delay(1000);
 	}

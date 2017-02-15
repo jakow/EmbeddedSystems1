@@ -49,7 +49,7 @@ AlarmControlComponent.prototype.initialiseClickEvents = function() {
 		this.changingScheduleFlag = !this.changingScheduleFlag;
 		this.changeScheduleButton.classList.toggle('set');
 		this.timerStart.setButtonsVisibilityState(this.changingScheduleFlag);
-		this.timerEnd.setButtonsVisibilityState(this.changeScheduleButton);
+		this.timerEnd.setButtonsVisibilityState(this.changingScheduleFlag);
 		if (!this.changingScheduleFlag) { // done changing
 			this.pushScheduledTime(this.timerStart.getTime(), this.timerEnd.getTime());
 		}
