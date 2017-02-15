@@ -189,12 +189,7 @@ void Sched_task(uint_32 initial_data) {
 		}
 
 		for (i = 0; i < N_ROOMS; i++) {
-			// if (room_alarms[i].timer_on && room_alarms[i].start_time >= curr_time.seconds) {
-			// 	room_alarms[i].status = ENABLED;
-			// }
-			// if (room_alarms[i].timer_on && room_alarms[i].end_time >= curr_time.seconds) {
-			// 	room_alarms[i].status = DISABLED;
-			// }
+			// do not do anything to triggered alarms
 			if (room_alarms[i].status == TRIGGERED)
 				continue;
 
@@ -213,8 +208,7 @@ void Sched_task(uint_32 initial_data) {
 				else
 					room_alarms[i].status = DISABLED;
 			}
-			// if equal, do nothing
-
+			// if times are equal, then the alarm is not scheduled
 		}
 		_time_delay(1000);
 	}
