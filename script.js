@@ -119,18 +119,19 @@ AlarmControlComponent.prototype.pushStatus = function(enabled) {
 }
 
 AlarmControlComponent.prototype.pushScheduledTime = function (start, end) {
-	fetch('set_enable_time.cgi?room='+this.id
-		+ "&start=" + start + "&end=" + end)
+	var url = 'set_enable_time.cgi?room='+ this.id + "&start=" + start + "&end=" + end;
+	console.log(url);
+	fetch(url)
 	.then(function(response) {
 		if (!response.ok) {
-			this.pushStatus(ERROR);
+			this.setStatus(ERROR);
 			this.timerStart.clearTime();
 			this.timerEnd.clearTime();
 			alert('Failed to schedule the alarm.');
 		}
 	}.bind(this))
 	.catch(function(err) {
-		this.pushStatus(ERROR);
+		this.setStatus(ERROR);
 		this.timerStart.clearTime();
 		this.timerEnd.clearTime();
 		alert('Failed to schedule the alarm.');
@@ -307,6 +308,13 @@ function setSystemTime(time) {
 var systemTimeUpdateFlag = false;
 var systemTimer = new TimerComponent(document.getElementById('system-timer'));
 var setSystemTimeButton = document.getElementById('set-system-time');
+var enableAllButton = document.getElementById('enable-all-button');
+var disableenableAllButton = document.getElementById('disable-all-button');
+var hushAllButton = document.getElementById('hush-all-button');
+
+enableAllButton.onclick = function() { fetch('enable_all.cgi') }
+disableAllButton.onclick = function() { fetch('disable_all.cgi') }
+hushAllButton.onclick = function() { fetch('hush_all.cgi') }
 
 var alarms = arrayQuerySelector(document, '.room')
 	.map(function(elem, id) {
@@ -324,6 +332,8 @@ setSystemTimeButton.onclick = function () {
 		setSystemTime(systemTimer.getTime());
 	}
 }
+
+
 
 fetchStatus(alarms, systemTimer);
 var interval = setInterval(function () {

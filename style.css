@@ -51,7 +51,7 @@ p {
 	box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.20), 0px 4px 17px 4px rgba(0,0,0,0.2);
 }
 
-.top-bar {
+.flex-bar {
 	padding: 1rem 30px;
 	border-bottom: 1px solid #ccc;
 	display: flex;
@@ -59,11 +59,14 @@ p {
 	align-items: center;
 }
 
-.top-bar .right {
+.flex-bar .right {
 	flex: 1;
 	text-align: right;
+	margin-left: auto
 }
-
+.flex-bar .button {
+	margin-bottom: 0;
+}
 .brand > * {
 	display: inline;
 	vertical-align: middle;
@@ -81,6 +84,9 @@ p {
 	display: flex;
 	flex-wrap: wrap;
 	flex-direction: row;
+}
+.grid-row.inline {
+	display: inline-flex;
 }
 
 .grid-cell {
@@ -255,9 +261,9 @@ p {
 }
 
 .system-time-module {
-	justify-content: flex-end;
-	align-items: center;
 	font-size: 2rem;
+	align-items: center;
+	justify-content: flex-end;
 }
 
 .system-time-module > div+div {
@@ -363,4 +369,24 @@ button.button[disabled], button.button:disabled {
 	content: '\25BC';
 }
 
+.all-button {
+	width: 160px;
+}
 
+.all-button+.all-button {
+	margin-left: 12px;
+}
+
+#enable-all-button {
+background: #32D187;
+color: white;
+}
+
+#disable-all-button {
+background: #FFA726;
+color: white;
+}
+
+#hush-all-button {
+
+}

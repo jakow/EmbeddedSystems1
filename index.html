@@ -14,7 +14,7 @@
 <body class="">
 
 <div class="main-container">
-	<div class="top-bar">
+	<div class="flex-bar">
 		<div class="brand left">
 			<img class="logo" src="logo.png">
 			<span class="logo-name">Home Security</span>
@@ -231,7 +231,13 @@
 	</div>
 
 
-	<div class="system-time-module top-bar">
+	<div class="flex-bar">
+		<div class="left">
+			<button class="button all-button" id="hush-all-button">Hush all</button>
+			<button class="button all-button" id="enable-all-button">Enable all</button>
+			<button class="button all-button" id="disable-all-button">Disable all</button>
+		</div>
+		<div class="right system-time-module grid-row inline">
 		<div>System time:</div>
 		<div id="system-timer" class="timer-component">
 			<div class="incs up">
@@ -247,6 +253,7 @@
 			</div>
 		</div>
 		<button id="set-system-time" class="button">Set</button>
+		</div>
 	</div>
 
 	
