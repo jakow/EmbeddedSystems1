@@ -299,6 +299,15 @@ _mqx_int hush_all(HTTPD_SESSION_STRUCT *session) {
 	return session->request.content_len;
 }
 
+_mqx_int disable_all(HTTPD_SESSION_STRUCT *session) {
+	char buffer[BUFFER_LENGTH];
+
+	disable_all_callback(NULL);
+	sprintf(buffer, "All alarms disabled");	
+	httpd_sendstr(session->sock, buffer);
+	return session->request.content_len;
+}
+
 _mqx_int set_enable_time(HTTPD_SESSION_STRUCT *session) {
 	unsigned int num = 0;
 	char buffer[BUFFER_LENGTH];
