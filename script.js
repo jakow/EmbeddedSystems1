@@ -309,7 +309,7 @@ var systemTimeUpdateFlag = false;
 var systemTimer = new TimerComponent(document.getElementById('system-timer'));
 var setSystemTimeButton = document.getElementById('set-system-time');
 var enableAllButton = document.getElementById('enable-all-button');
-var disableenableAllButton = document.getElementById('disable-all-button');
+var disableAllButton = document.getElementById('disable-all-button');
 var hushAllButton = document.getElementById('hush-all-button');
 
 enableAllButton.onclick = function() { fetch('enable_all.cgi') }

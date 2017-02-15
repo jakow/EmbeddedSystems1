@@ -105,6 +105,7 @@ _mqx_int led_status_json(HTTPD_SESSION_STRUCT *);
 _mqx_int alarm_status_json(HTTPD_SESSION_STRUCT *);
 _mqx_int enable_all(HTTPD_SESSION_STRUCT *);
 _mqx_int hush_all(HTTPD_SESSION_STRUCT *);
+_mqx_int disable_all(HTTPD_SESSION_STRUCT *);
 
 
 
@@ -113,6 +114,7 @@ static HTTPD_CGI_LINK_STRUCT http_cgi_params[] = {
 	{ "timer_status", get_timer_status },
 	{ "enable_all", enable_all },
 	{ "hush_all", hush_all },
+	{ "disable_all", disable_all}, 
 	{ "set_enable_time", set_enable_time },
 	{ "set_status", set_status_callback},
 	{ "led_status", led_status_json },
@@ -221,25 +223,20 @@ void trigger_alarm_callback(void* room_alarm_ptr) {
 
 void disable_all_callback(void* dummy) {
 	int i;
-	// mutex lock
 	for (i = 0; i < N_ROOMS; ++i) {
     room_alarms[i].status = DISABLED;
 	}
-	//mutex unlock
 }
 
 void enable_all_callback(void* dummy) {
 	int i;
-	// mutex lock
 	for (i = 0; i < N_ROOMS; ++i) { //enable all alarms
 			room_alarms[i].status = ENABLED;
 	}
-	// mutex unlock
 }
 
 void led_update(uint_32 toggle_state) {
 	int i, value;
-	//mutex lock
 	for (i = 0; i < N_ROOMS; ++i) {
 		switch(room_alarms[i].status) {
 			case TRIGGERED: 
@@ -254,29 +251,8 @@ void led_update(uint_32 toggle_state) {
 		}
 		btnled_set_value(hmi, room_alarms[i].led, value);
 	}
-	// mutex unlock
 }
 
-// _mqx_int led_callback(HTTPD_SESSION_STRUCT *session) {
-// 	int led = atoi(session->request.urldata);
-// 	httpd_sendstr(session->sock, "<html><body>LED toggled</body><html>");
-// 	btnled_toogle(hmi, HMI_GET_LED_ID(led));
-// 	return session->request.content_len;
-// }
-
-// _mqx_int rtc_get_callback(HTTPD_SESSION_STRUCT *session) {
-// 	RTC_TIME_STRUCT curr_time;
-// 	unsigned int hours, minutes, seconds;
-// 	char buffer[BUFFER_LENGTH];
-
-// 	_rtc_get_time(&curr_time);
-// 	seconds = curr_time.seconds % 60;
-// 	minutes = (curr_time.seconds / 60) % 60;
-// 	hours = curr_time.seconds / 3600;
-// 	snprintf(buffer, BUFFER_LENGTH, "%02u:%02u:%02u\n", hours, minutes, seconds);
-// 	httpd_sendstr(session->sock, buffer);
-// 	return session->request.content_len;
-// }
 
 _mqx_int set_system_time(HTTPD_SESSION_STRUCT *session) {
 	RTC_TIME_STRUCT new_time;
