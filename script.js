@@ -24,7 +24,7 @@ function AlarmControlComponent(parentEl, id) {
 	this.id = id;
 	this.schTime = 0;
 	this.status = CHECKING;
-	this.pushingStateFlag = false;
+	this.changingStateFlag = false;
 	this.changingScheduleFlag = false;
 
 	this.enableButton = arrayQuerySelector(parentEl, '.onoffswitch-checkbox')[0];
@@ -36,7 +36,6 @@ function AlarmControlComponent(parentEl, id) {
 	this.timerEnd = new TimerComponent(timers[1]);
 
 	this.initialiseClickEvents();
-	console.log(this.id);
 
 }
 
@@ -99,7 +98,7 @@ AlarmControlComponent.prototype.setStatus = function(status) {
 };
 
 AlarmControlComponent.prototype.pushStatus = function(enabled) {
-	this.pushingStateFlag = true;
+	this.changingStateFlag = true;
 	this.setStatus(enabled); // set status eagerly for fast UI
 	// this.setStatus(enabled ? ENABLED : DISABLED); // set status eagerly
 	var url = "/set_status.cgi?room="+ this.id+ "&status=" + (enabled ? "1" : "0");
@@ -110,24 +109,25 @@ AlarmControlComponent.prototype.pushStatus = function(enabled) {
 			this.setStatus(enabled);	
 		else
 			this.setStatus(ERROR);
-		this.pushingStateFlag = false;
+		this.changingStateFlag = false;
 	}.bind(this))
 	.catch(function(err) {
 		this.setStatus(ERROR);
-		this.pushingStateFlag = false;
+		this.changingStateFlag = false;
 	}.bind(this));
 
 }
 
 AlarmControlComponent.prototype.pushScheduledTime = function (start, end) {
-	fetch('set_enable_time.cgi?&room='+this.id
+	fetch('set_enable_time.cgi?room='+this.id
 		+ "&start=" + start + "&end=" + end)
 	.then(function(response) {
-		if (!response.ok)
+		if (!response.ok) {
 			this.pushStatus(ERROR);
 			this.timerStart.clearTime();
 			this.timerEnd.clearTime();
 			alert('Failed to schedule the alarm.');
+		}
 	}.bind(this))
 	.catch(function(err) {
 		this.pushStatus(ERROR);
@@ -259,12 +259,13 @@ IncrementButton.prototype.stopIncrement = function (event) {
 function updateAlarmStatus(alarms, statusArr) {
 	var status;
 	alarms.forEach(function(alarm, idx) {
-		status = statusArr[idx]
-		if (!alarm.pushingStateFlag) // pushStatus has priority
+		status = statusArr[idx];
+		if (!alarm.changingStateFlag) // pushStatus has priority
 			alarm.setStatus(status.status);
+		if(!alarm.changingScheduleFlag) {
 			alarm.timerStart.setTime(status.start_time);
 			alarm.timerEnd.setTime(status.end_time)
-	
+		}
 	});
 	if (alarms.some(function(alarm) {return alarm.status == TRIGGERED}))
 		document.body.classList.add('alarm');
@@ -320,7 +321,6 @@ setSystemTimeButton.onclick = function () {
 	} 
 	else {
 		systemTimer.setButtonsVisibilityState(false);
-		console.log(systemTimer.getTime());
 		setSystemTime(systemTimer.getTime());
 	}
 }
