@@ -44,6 +44,7 @@
 
 #define BUFFER_LENGTH 256
 #define N_ROOMS 4
+#define SECONDS_PER_DAY 86400
 
 TASK_TEMPLATE_STRUCT MQX_template_list[] =
 {
@@ -179,11 +180,12 @@ void Sched_task(uint_32 initial_data) {
 	int i;
 	while (TRUE) {
 		_rtc_get_time(&curr_time);
+		curr_time.seconds = curr_time.seconds % SECONDS_PER_DAY;
 		for (i = 0; i < N_ROOMS; i++) {
-			if (room_alarms[i].timer_on && room_alarms[i].start_time == curr_time.seconds) {
+			if (room_alarms[i].timer_on && room_alarms[i].start_time >= curr_time.seconds) {
 				room_alarms[i].status = ENABLED;
 			}
-			if (room_alarms[i].timer_on && room_alarms[i].end_time == curr_time.seconds) {
+			if (room_alarms[i].timer_on && room_alarms[i].end_time >= curr_time.seconds) {
 				room_alarms[i].status = DISABLED;
 			}
 		}
@@ -259,6 +261,7 @@ _mqx_int set_system_time(HTTPD_SESSION_STRUCT *session) {
 	char buffer[BUFFER_LENGTH];
 
 	sscanf(session->request.urldata, "%u", &new_time.seconds);
+	new_time.seconds = new_time.seconds % SECONDS_PER_DAY;
 	_rtc_set_time(&new_time);
 
 	sprintf(buffer, "{ \"system_time\" : %u }", new_time.seconds);
