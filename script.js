@@ -36,6 +36,7 @@ function AlarmControlComponent(parentEl, id) {
 	this.timerEnd = new TimerComponent(timers[1]);
 
 	this.initialiseClickEvents();
+	console.log(this.id);
 
 }
 
@@ -256,10 +257,14 @@ IncrementButton.prototype.stopIncrement = function (event) {
 }
 
 function updateAlarmStatus(alarms, statusArr) {
+	var status;
 	alarms.forEach(function(alarm, idx) {
+		status = statusArr[idx]
 		if (!alarm.pushingStateFlag) // pushStatus has priority
-			alarm.setStatus(statusArr[idx].status);
-		// item.setScheduledTime(statusArr[idx].sched_time);
+			alarm.setStatus(status.status);
+			alarm.timerStart.setTime(status.start_time);
+			alarm.timerEnd.setTime(status.end_time)
+	
 	});
 	if (alarms.some(function(alarm) {return alarm.status == TRIGGERED}))
 		document.body.classList.add('alarm');

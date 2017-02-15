@@ -63,7 +63,7 @@ const TFS_DIR_ENTRY static_data[] = {
 		{"/index.html",	0, index_html, 	sizeof(index_html)},
 		{"/script.js",	0, script_js, 	sizeof(script_js)},
 		{"/style.css",	0, style_css, 	sizeof(style_css)},
-		{"/logo.svg",	0, logo_svg, 	sizeof(logo_svg)},
+		{"/logo.png",	0, logo_png, 	sizeof(logo_png)},
 		{0,				0, 0,					0}
 	};
 
@@ -281,13 +281,15 @@ _mqx_int get_timer_status(HTTPD_SESSION_STRUCT *session) {
 _mqx_int set_enable_time(HTTPD_SESSION_STRUCT *session) {
 	unsigned int num = 0;
 	char buffer[BUFFER_LENGTH];
-
+	unsigned int start, end;
 	sscanf(session->request.urldata, "room=%01u&start=%u&end=%u", &num, 
-		&room_alarms[num].start_time, &room_alarms[num].end_time);
+		&start, &end);
+	room_alarms[num].start_time = start;
+	room_alarms[num].end_time = end;
 	room_alarms[num].timer_on = 1;
 
 	sprintf(buffer, "{ \"room\" : %01u, \"start_time\" : %u, \"end_time\" : %u }", 
-						num, room_alarms[num].start_time, room_alarms[num].end_time);
+						num, start, end);
 	httpd_sendstr(session->sock, buffer);
 	return session->request.content_len;
 }

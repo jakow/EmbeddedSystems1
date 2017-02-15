@@ -33,7 +33,7 @@ webpage.h : index.html style.css script.js status.json
 	xxd -i index.html > index.h
 	xxd -i script.js > script.h
 	xxd -i style.css > style.h
-	xxd -i logo.svg > logo.h
+	xxd -i logo.png > logo.h
 	xxd -i status.json | sed s/}\;/,0x00}\;/ > status.h
 	cat index.h > webpage.h
 	cat style.h >> webpage.h
