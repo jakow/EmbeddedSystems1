@@ -96,7 +96,7 @@ void trigger_alarm_callback(void *room_alarm_ptr);
 void disable_all_callback(void *room_alarm_ptr);
 void enable_all_callback(void *room_alarm_ptr);
 void hush_all_callback(void *room_alarm_ptr);
-
+void toggle_all_callback(void *room_alarm_ptr);
 
 /* initialise webserver paths */
 _mqx_int set_system_time(HTTPD_SESSION_STRUCT *);
@@ -210,8 +210,8 @@ void init_room_alarms() {
 }
 
 void init_pushbuttons() {
-	btnled_add_clb(hmi, HMI_BUTTON_5, HMI_VALUE_RELEASE, enable_all_callback, NULL);
-	btnled_add_clb(hmi, HMI_BUTTON_6, HMI_VALUE_RELEASE, disable_all_callback, NULL);
+	btnled_add_clb(hmi, HMI_BUTTON_5, HMI_VALUE_RELEASE, toggle_all_callback, NULL);
+	btnled_add_clb(hmi, HMI_BUTTON_6, HMI_VALUE_RELEASE, hush_all_callback, NULL);
 }
 
 
@@ -219,6 +219,21 @@ void trigger_alarm_callback(void* room_alarm_ptr) {
 	room_alarm* r = (room_alarm*) room_alarm_ptr; // cast to room_alarm
 	if (r->status == ENABLED) 
 		r->status = TRIGGERED; // flash if triggered
+}
+
+void toggle_all_callback(void* dummy) {
+	int i;
+	int already_enabled = 0; 
+	for (i = 0; i < N_ROOMS; i++) {
+		if (room_alarms[i].status == ENABLED) 
+			already_enabled++;
+		else
+			room_alarms[i].status = ENABLED;
+	}
+	if (already_enabled == N_ROOMS) {
+		for (i = 0; i < N_ROOMS; i++)
+			room_alarms[i].status = DISABLED;
+	}
 }
 
 void disable_all_callback(void* dummy) {
