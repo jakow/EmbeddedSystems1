@@ -60,7 +60,7 @@ TASK_TEMPLATE_STRUCT MQX_template_list[] =
 static HTTPD_ROOT_DIR_STRUCT http_root_dir[] = {
 	{ "", "tfs:"}, { 0,0 } };
 
-
+// files converted to C strings with XXD
 const TFS_DIR_ENTRY static_data[] = {
 		{"/index.html",	0, index_html, 	sizeof(index_html)},
 		{"/script.js",	0, script_js, 	sizeof(script_js)},
@@ -91,34 +91,34 @@ void init_room_alarms();
 void init_pushbuttons();
 void led_update();
 
-/* button/touch sensor callbacks*/
-void trigger_alarm_callback(void *room_alarm_ptr);
-void disable_all_callback(void *room_alarm_ptr);
-void enable_all_callback(void *room_alarm_ptr);
-void hush_all_callback(void *room_alarm_ptr);
-void toggle_all_callback(void *room_alarm_ptr);
+/* functions/callbacks */
+void trigger_alarm(void *);
+void disable_all(void *);
+void enable_all(void *);
+void hush_all(void *);
+void toggle_all(void *);
 
 /* initialise webserver paths */
-_mqx_int set_system_time(HTTPD_SESSION_STRUCT *);
-_mqx_int get_timer_status(HTTPD_SESSION_STRUCT *);
-_mqx_int set_enable_time(HTTPD_SESSION_STRUCT *);
-_mqx_int set_status_callback(HTTPD_SESSION_STRUCT *);
-_mqx_int alarm_status(HTTPD_SESSION_STRUCT *);
-_mqx_int enable_all(HTTPD_SESSION_STRUCT *);
-_mqx_int hush_all(HTTPD_SESSION_STRUCT *);
-_mqx_int disable_all(HTTPD_SESSION_STRUCT *);
+_mqx_int cgi_set_system_time(HTTPD_SESSION_STRUCT *);
+_mqx_int cgi_get_timer_status(HTTPD_SESSION_STRUCT *);
+_mqx_int cgi_set_enable_time(HTTPD_SESSION_STRUCT *);
+_mqx_int cgi_set_status(HTTPD_SESSION_STRUCT *);
+_mqx_int cgi_alarm_status(HTTPD_SESSION_STRUCT *);
+_mqx_int cgi_enable_all(HTTPD_SESSION_STRUCT *);
+_mqx_int cgi_hush_all(HTTPD_SESSION_STRUCT *);
+_mqx_int cgi_disable_all(HTTPD_SESSION_STRUCT *);
 
 
-
+// list of CGI routes
 static HTTPD_CGI_LINK_STRUCT http_cgi_params[] = {
-	{ "set_system_time", set_system_time },
-	{ "timer_status", get_timer_status },
-	{ "enable_all", enable_all },
-	{ "hush_all", hush_all },
-	{ "disable_all", disable_all}, 
-	{ "set_enable_time", set_enable_time },
-	{ "set_status", set_status_callback},
-	{ "alarm_status", alarm_status },
+	{ "set_system_time", 	cgi_set_system_time },
+	{ "timer_status", 		cgi_get_timer_status },
+	{ "enable_all", 		cgi_enable_all },
+	{ "hush_all", 			cgi_hush_all },
+	{ "disable_all", 		cgi_disable_all}, 
+	{ "set_enable_time", 	cgi_set_enable_time },
+	{ "set_status", 		cgi_set_status},
+	{ "alarm_status", 		cgi_alarm_status },
 	{ 0, 0 }
 };
 
@@ -127,7 +127,6 @@ void Main_task(uint_32 initial_data) {
 	_io_tfs_install("tfs:", static_data);
 
 	// initialise the LED driver
-	// _bsp_btnled_init() must be called before rtcs_init
 	hmi = _bsp_btnled_init();
 	// initialise rtcs
 	rtcs_init();
@@ -146,6 +145,7 @@ void Main_task(uint_32 initial_data) {
 	_task_create(0, SCHED_TASK, 0);
 	// run server
 	httpd_server_run(http_server);
+	// poll for and handle HTTP requests
 	while (TRUE) {
 		ipcfg_task_poll();
 		_sched_yield(); //yield to other tasks
@@ -196,19 +196,21 @@ void Sched_task(uint_32 initial_data) {
 			start = room_alarms[i].start_time;
 			end = room_alarms[i].end_time;
 			if (start > end) {
-				// the clock must wrap
+				// the clock wraps when the alarm is scheduled between 17:00 to 04:00
+				// so need to handle this correctly
 				if (curr_time >= start || curr_time < end) 
 					room_alarms[i].status = ENABLED;
 				else 
 					room_alarms[i].status = DISABLED;
 			}
 			else if (start < end) {
+				// otherwise the clock
 				if (curr_time >= start && curr_time < end)
 					room_alarms[i].status = ENABLED;
 				else
 					room_alarms[i].status = DISABLED;
 			}
-			// if times are equal, then the alarm is not scheduled
+			// if times are equal, then the alarm is not scheduled, so no 'else' needed
 		}
 		_time_delay(1000);
 	}
@@ -228,23 +230,23 @@ void init_room_alarms() {
 		btnled_add_clb(hmi,
 			room_alarms[i].button,
 			HMI_VALUE_PUSH,
-			trigger_alarm_callback, (void*) &room_alarms[i]);
+			trigger_alarm, (void*) &room_alarms[i]);
 	}
 }
 
 void init_pushbuttons() {
-	btnled_add_clb(hmi, HMI_BUTTON_5, HMI_VALUE_RELEASE, toggle_all_callback, NULL);
-	btnled_add_clb(hmi, HMI_BUTTON_6, HMI_VALUE_RELEASE, hush_all_callback, NULL);
+	btnled_add_clb(hmi, HMI_BUTTON_5, HMI_VALUE_RELEASE, toggle_all, NULL);
+	btnled_add_clb(hmi, HMI_BUTTON_6, HMI_VALUE_RELEASE, hush_all, NULL);
 }
 
 
-void trigger_alarm_callback(void* room_alarm_ptr) {
+void trigger_alarm(void* room_alarm_ptr) {
 	room_alarm* r = (room_alarm*) room_alarm_ptr; // cast to room_alarm
 	if (r->status == ENABLED) 
 		r->status = TRIGGERED; // flash if triggered
 }
 
-void toggle_all_callback(void* dummy) {
+void toggle_all(void* dummy) {
 	int i;
 	int already_enabled = 0; 
 	for (i = 0; i < N_ROOMS; i++) {
@@ -259,21 +261,22 @@ void toggle_all_callback(void* dummy) {
 	}
 }
 
-void disable_all_callback(void* dummy) {
+void disable_all(void* dummy) {
 	int i;
 	for (i = 0; i < N_ROOMS; ++i) {
-    room_alarms[i].status = DISABLED;
+    	room_alarms[i].status = DISABLED;
 	}
 }
 
-void enable_all_callback(void* dummy) {
+void enable_all(void* dummy) {
 	int i;
 	for (i = 0; i < N_ROOMS; ++i) { //enable all alarms
-			room_alarms[i].status = ENABLED;
+		room_alarms[i].status = ENABLED;
 	}
 }
 
-void hush_all_callback(void* dummy) {
+
+void hush_all(void* dummy) {
 	int i;
 	for (i = 0; i < N_ROOMS; ++i) { //enable all alarms
 		if (room_alarms[i].status == TRIGGERED)
@@ -281,6 +284,7 @@ void hush_all_callback(void* dummy) {
 	}
 }
 
+// helper for LED flashing
 void led_update(uint_32 toggle_state) {
 	int i, value;
 	for (i = 0; i < N_ROOMS; ++i) {
@@ -301,7 +305,7 @@ void led_update(uint_32 toggle_state) {
 
 // CGI routines
 
-_mqx_int set_system_time(HTTPD_SESSION_STRUCT *session) {
+_mqx_int cgi_set_system_time(HTTPD_SESSION_STRUCT *session) {
 	RTC_TIME_STRUCT new_time;
 	char buffer[BUFFER_LENGTH];
 
@@ -314,7 +318,7 @@ _mqx_int set_system_time(HTTPD_SESSION_STRUCT *session) {
 	return session->request.content_len;
 }
 
-_mqx_int get_timer_status(HTTPD_SESSION_STRUCT *session) {
+_mqx_int cgi_get_timer_status(HTTPD_SESSION_STRUCT *session) {
 	int num;
 	char buffer[BUFFER_LENGTH];
 	sscanf(session->request.urldata, "room=%01u", &num);
@@ -325,31 +329,34 @@ _mqx_int get_timer_status(HTTPD_SESSION_STRUCT *session) {
 	return session->request.content_len;
 }
 
-_mqx_int enable_all(HTTPD_SESSION_STRUCT *session) {
+_mqx_int cgi_enable_all(HTTPD_SESSION_STRUCT *session) {
 	char buffer[BUFFER_LENGTH];
-	enable_all_callback(NULL);
+	enable_all(NULL);
 	sprintf(buffer, "All alarms enabled");	
 	httpd_sendstr(session->sock, buffer);
 	return session->request.content_len;
 }
 
-_mqx_int hush_all(HTTPD_SESSION_STRUCT *session) {
+// hush all alarms
+_mqx_int cgi_hush_all(HTTPD_SESSION_STRUCT *session) {
 	char buffer[BUFFER_LENGTH];
-	hush_all_callback(NULL);
+	hush_all(NULL);
 	sprintf(buffer, "All alarms hushed");	
 	httpd_sendstr(session->sock, buffer);
 	return session->request.content_len;
 }
 
-_mqx_int disable_all(HTTPD_SESSION_STRUCT *session) {
+// disable all alarms
+_mqx_int cgi_disable_all(HTTPD_SESSION_STRUCT *session) {
 	char buffer[BUFFER_LENGTH];
-	disable_all_callback(NULL);
+	disable_all(NULL);
 	sprintf(buffer, "All alarms disabled");	
 	httpd_sendstr(session->sock, buffer);
 	return session->request.content_len;
 }
 
-_mqx_int set_enable_time(HTTPD_SESSION_STRUCT *session) {
+// set alarm enable times
+_mqx_int cgi_set_enable_time(HTTPD_SESSION_STRUCT *session) {
 	unsigned int num = 0;
 	char buffer[BUFFER_LENGTH];
 	unsigned int start, end;
@@ -365,7 +372,8 @@ _mqx_int set_enable_time(HTTPD_SESSION_STRUCT *session) {
 	return session->request.content_len;
 }
 
-_mqx_int set_status_callback(HTTPD_SESSION_STRUCT *session) {
+//set the enabled status of a room - ENABLED or DISABLED
+_mqx_int cgi_set_status(HTTPD_SESSION_STRUCT *session) {
   char buffer[32];
   int num, status;
   sscanf(session->request.urldata, "room=%u&status=%u", &num, &status);
@@ -375,12 +383,12 @@ _mqx_int set_status_callback(HTTPD_SESSION_STRUCT *session) {
   return session->request.content_len;
 }
 
-
-_mqx_int alarm_status(HTTPD_SESSION_STRUCT *session) {
+// get status of the whole system. 
+_mqx_int cgi_alarm_status(HTTPD_SESSION_STRUCT *session) {
 	char buffer[512];
 	RTC_TIME_STRUCT curr_time;
 	_rtc_get_time(&curr_time);
-  sprintf(buffer, (const char*) status_json,
+  sprintf(buffer, (const char*) status_json, // fill a JSON template with data. See status.json file
           room_alarms[0].status, room_alarms[0].timer_on, room_alarms[0].start_time, room_alarms[0].end_time,
           room_alarms[1].status, room_alarms[1].timer_on, room_alarms[1].start_time, room_alarms[1].end_time,
           room_alarms[2].status, room_alarms[2].timer_on, room_alarms[2].start_time, room_alarms[2].end_time,

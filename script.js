@@ -112,7 +112,7 @@ AlarmControlComponent.prototype.pushStatus = function(enabled) {
 
 AlarmControlComponent.prototype.pushScheduledTime = function (start, end) {
 	var url = 'set_enable_time.cgi?room='+ this.id + "&start=" + start + "&end=" + end;
-	var handleEror = () => {
+	var handleError = () => {
 		this.setStatus(ERROR);
 		this.timerStart.clearTime();
 		this.timerEnd.clearTime();
@@ -122,10 +122,10 @@ AlarmControlComponent.prototype.pushScheduledTime = function (start, end) {
 	fetch(url)
 	.then(response => {
 		if (!response.ok) {
-			handleEror();
+			handleError();
 		}
 	})
-	.catch(handleEror);
+	.catch(handleError);
 };
 
 /* 	Timer component 
